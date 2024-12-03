@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <glm/glm.hpp>
+#include <octree.h>
 #include <stdlib.h>
 #include <volvis_utils/utils.h>
 
