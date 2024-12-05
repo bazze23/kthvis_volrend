@@ -1,9 +1,6 @@
 #ifndef OCTREE_H
 #define OCTREE_H
 
-#include <algorithm>
-#include <glm/glm.hpp>
-#include <stdlib.h>
 #include <volvis_utils/utils.h>
 
 // Axis-Aligned Bounding Box
@@ -28,21 +25,14 @@ struct AABB {
 struct OctreeNode {
 	bool isLeaf;             // True if node has no children
 	bool isEmpty;            // True if node does not contain relevant data
-	AABB bounds;             // Axis-Aligned Bounding Box (container for points)
+	AABB bounds;             // Bounds in 3D space for this node
 	OctreeNode* children[8]; // Pointers to children
 
 	// Constructor
 	OctreeNode(const AABB& box);
 };
 
-// Recursively build the octree
+// Recursively build the octree based on a volume
 void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDepth, int currentDepth);
-
-// Compute the child bounds based on its index
-AABB computeChildBounds(const AABB& parentBounds, int childIndex);
-
-bool checkIfEmpty(vis::StructuredGridVolume* volume, const AABB& bounds);
-
-glm::vec3 computeOffset(int childIndex, glm::vec3 size);
 
 #endif // OCTREE_H
