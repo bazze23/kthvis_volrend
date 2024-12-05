@@ -67,6 +67,7 @@ namespace vis
     void* GetArrayData ();
 
     double GetNormalizedSample (int x, int y, int z);
+    double GetAbsoluteSample (int x, int y, int z);
     double GetNormalizedInterpolatedSample (double x, double y, double z);
 
     unsigned long long CheckSum ();
