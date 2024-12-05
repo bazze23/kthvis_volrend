@@ -26,6 +26,7 @@ add_executable(cppvolrend
                app_glfw.cpp                                                    app_glfw.h
                renderingmanager.cpp                                            renderingmanager.h
                volrenderbase.cpp                                               volrenderbase.h
+               structured/rc1pess/octree.cpp                                   structured/rc1pess/octree.h
                
                # Null Bounding Box Grid
                volrendernull.cpp                                               volrendernull.h
