@@ -253,7 +253,7 @@ namespace vis
       printf("  - Volume Size     : [%d, %d, %d]\n", fw, fh, fd);
       printf("  - Volume Byte Size: %d\n", bytes_per_value);
 
-      AABB volumeBox = AABB(glm::vec3(0, 0, 0), glm::vec3(255, 255, 255));
+      AABB volumeBox = AABB(glm::vec3(0, 0, 0), glm::vec3(fw-1, fh-1, fd-1));
       OctreeNode node = OctreeNode(volumeBox);
       BuildOctree(&node, sg_ret, 15, 0);
       std::cout << "Octree built!" << std::endl;

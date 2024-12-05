@@ -61,7 +61,8 @@ bool checkIfEmpty(vis::StructuredGridVolume* volume, const AABB& bounds) {
 	for (size_t x = 0; x < bounds.max.x; x++) {
 		for (size_t y = 0; y < bounds.max.y; y++) {
 			for (size_t z = 0; z < bounds.max.z; z++) {
-				if (volume->GetNormalizedSample(x, y, z) > 0.19607843137) return false;	// Non-empty if there exists at least one sample that exceeds threshold
+				// if (volume->GetNormalizedSample(x, y, z) > 0.19607843137) return false;	// Non-empty if there exists at least one sample that exceeds threshold
+				if (volume->GetNormalizedSample(x, y, z) > 0.05) return false;	// Non-empty if there exists at least one sample that exceeds threshold
 				// if (volume->GetAbsoluteSample(x, y, z) != 35 && volume->GetAbsoluteSample(x, y, z) != 0) return false;	// Non-empty if there exists at least one sample that exceeds threshold
 			}
 		}
