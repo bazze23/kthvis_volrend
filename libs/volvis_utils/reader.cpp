@@ -12,6 +12,7 @@
 #include <array>
 
 #include <volvis_utils/transferfunction1d.h>
+#include "../cppvolrend/structured/rc1pess/octree.h"
 
 namespace vis
 {
@@ -159,6 +160,44 @@ namespace vis
     return ret;
   }
 
+  // Recursively print empty status for octree node
+  void printEmptyStatus(OctreeNode* node, int level) {
+    ++level;
+    for (size_t i = 0; i < 8; i++) {
+      if (node->isLeaf == true) continue;
+
+      std::cout << "Level: " << level << ", Child " << i << " empty: " << node->children[i]->isEmpty << std::endl;
+    
+      printEmptyStatus(node->children[i], level);
+    }
+  }
+
+  // Recursively print empty nodes of an octree
+  void printEmptyNodes(OctreeNode* node, int level) {
+    ++level;
+    for (size_t i = 0; i < 8; i++) {
+      if (node->isLeaf == true) continue;
+
+      if (node->children[i]->isEmpty) {
+        std::cout << "Level: " << level << ", Child: " << i << std::endl;
+      }
+    
+      printEmptyNodes(node->children[i], level);
+    }
+  }
+
+  // Recursively count empty nodes in octree
+  void countEmptyNodes(OctreeNode* node, int* res) {
+    res[1]++;
+    if (node->isEmpty) {
+      res[0]++;
+      return;
+    }
+    for (size_t i = 0; i < 8; i++) {
+      if (!node->isLeaf) countEmptyNodes(node->children[i], res);
+    }
+  }
+
   StructuredGridVolume* VolumeReader::readraw (std::string filepath)
   {
     StructuredGridVolume* sg_ret = nullptr;
@@ -213,6 +252,16 @@ namespace vis
       printf("  - Volume Name     : %s\n", filepath.c_str());
       printf("  - Volume Size     : [%d, %d, %d]\n", fw, fh, fd);
       printf("  - Volume Byte Size: %d\n", bytes_per_value);
+
+      AABB volumeBox = AABB(glm::vec3(0, 0, 0), glm::vec3(255, 255, 255));
+      OctreeNode node = OctreeNode(volumeBox);
+      BuildOctree(&node, sg_ret, 15, 0);
+      std::cout << "Octree built!" << std::endl;
+      // std::cout << "Print tree (empty status):" << std::endl;
+      // printEmptyNodes(&node, 0);
+      int arr[2] = {0,0};
+      countEmptyNodes(&node, arr);
+      std::cout << "Empty nodes: " << arr[0] << "/" << arr[1] << std::endl;
 
       iffile.close();
       printf("Finished -> Read Volume From .raw File\n");
