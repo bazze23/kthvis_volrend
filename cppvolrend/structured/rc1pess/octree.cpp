@@ -58,12 +58,16 @@ AABB computeChildBounds(const AABB& parentBounds, int childIndex) {
 
 // Check if node is empty
 bool checkIfEmpty(vis::StructuredGridVolume* volume, const AABB& bounds) {
+	// int allowedPoints = 100;
+	// int pointCount = 0;
 	for (size_t x = 0; x < bounds.max.x; x++) {
 		for (size_t y = 0; y < bounds.max.y; y++) {
 			for (size_t z = 0; z < bounds.max.z; z++) {
 				// if (volume->GetNormalizedSample(x, y, z) > 0.19607843137) return false;	// Non-empty if there exists at least one sample that exceeds threshold
-				if (volume->GetNormalizedSample(x, y, z) > 0.05) return false;	// Non-empty if there exists at least one sample that exceeds threshold
 				// if (volume->GetAbsoluteSample(x, y, z) != 35 && volume->GetAbsoluteSample(x, y, z) != 0) return false;	// Non-empty if there exists at least one sample that exceeds threshold
+				if (volume->GetNormalizedSample(x, y, z) > 0.05) return false; // Non-empty if there exists at least one sample that exceeds threshold
+				                                                               // if (volume->GetNormalizedSample(x, y, z) > 0.05) ++pointCount;	// Non-empty if there exists at least one sample that exceeds threshold
+				                                                               // if (pointCount > allowedPoints) return false;
 			}
 		}
 	}
@@ -77,4 +81,23 @@ glm::vec3 computeOffset(int childIndex, glm::vec3 size) {
 	float zOffset = (childIndex & 4) ? size.z * 0.5f : 0.0f;
 
 	return glm::vec3(xOffset, yOffset, zOffset);
+}
+
+void FlattenOctree(OctreeNode* node, std::vector<GPUOctreeNode>& flatTree, int parentIndex) {
+	GPUOctreeNode gpuNode;
+	gpuNode.minBounds = node->bounds.min;
+	gpuNode.maxBounds = node->bounds.max;
+	gpuNode.isLeaf = node->isLeaf? 1 : 0;
+	gpuNode.isEmpty = node->isEmpty? 1 : 0;
+
+	if (!node->isLeaf) {
+		for (int i = 0; i < 8; i++) {
+			gpuNode.childIndices[i] = flatTree.size() + 1 + i;
+			FlattenOctree(node->children[i], flatTree, flatTree.size());
+		}
+	} else {
+		std::fill(std::begin(gpuNode.childIndices), std::end(gpuNode.childIndices), -1);
+	}
+
+	flatTree.push_back(gpuNode);
 }

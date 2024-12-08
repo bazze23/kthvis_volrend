@@ -38,12 +38,69 @@ uniform int ApplyShadow;
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 layout (rgba16f, binding = 0) uniform image2D OutputFrag;
 
+struct GPUOctreeNode {
+    vec3 minBounds;
+    vec3 maxBounds;
+    int childIndices[8];
+    int isLeaf;
+    int isEmpty;
+};
+
+layout (std430, binding = 4) buffer OctreeData {
+    GPUOctreeNode flatTree[];
+};
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // From _structured_volume_data/ray_bbox_intersection.frag
 struct Ray { vec3 Origin; vec3 Dir; };
 bool RayAABBIntersection (vec3 vert_eye, vec3 vert_dir, vec3 vol_scaled_dim,
                           out Ray r, out float rtnear, out float rtfar);
 //////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Octree traversal function
+bool TraverseOctree(int nodeIndex, vec3 rayOrigin, vec3 rayDir, out vec3 intersectPos, out float rtnear, out float rtfar, out Ray r) {
+    // Initialize the stack with the root node index
+    int stack[100]; // Adjust the stack size if necessary
+    int stackTop = 0;
+    
+    stack[stackTop++] = nodeIndex; // Push the root node onto the stack
+    
+    while (stackTop > 0) {
+        // Pop a node from the stack
+        int currentNodeIndex = stack[--stackTop];
+        
+        GPUOctreeNode node = flatTree[currentNodeIndex];
+        vec3 nodeDim = node.maxBounds - node.minBounds;
+        
+        // Perform ray-box intersection test
+        if (!RayAABBIntersection(rayOrigin, rayDir, nodeDim, r, rtnear, rtfar)) {
+            continue; // Skip this node if it doesn't intersect with the ray
+        }
+        
+        // Skip empty nodes
+        if (node.isEmpty == 1) {
+            continue;
+        }
+        
+        // If it's a leaf node, return the intersection
+        if (node.isLeaf == 1) {
+            intersectPos = rayOrigin + rayDir * rtnear;
+            return true;
+        }
+        
+        // Otherwise, push child nodes onto the stack
+        for (int i = 0; i < 8; ++i) {
+            int childIndex = node.childIndices[i];
+            if (childIndex != -1) {
+                stack[stackTop++] = childIndex; // Push the child index onto the stack
+            }
+        }
+    }
+    
+    // Return false if no intersection is found after processing all nodes
+    return false;
+}
 
 vec3 ShadeBlinnPhong (vec3 Tpos, vec3 clr)
 {
@@ -105,6 +162,9 @@ void main ()
     // If inside volume grid
     if(inbox)
     {
+      vec3 my_intersect;
+      if (TraverseOctree(16, CameraEye, camera_dir, my_intersect, tnear, tfar, r)) {
+    //   if (true) {
       // Distance to be evaluated
       float D = abs(tfar - tnear);
 
@@ -116,7 +176,9 @@ void main ()
 #endif
 
       // World position at tnear, translated to the volume [0, VolumeGridSize]
-      vec3 wld_pos = r.Origin + r.Dir * tnear;
+    //   vec3 wld_pos = r.Origin + r.Dir * tnear;
+      vec3 wld_pos = my_intersect;
+    //   vec3 wld_pos = my_intersect;
       // Texture position
       vec3 tex_pos = wld_pos + (VolumeGridSize * 0.5);
       
@@ -174,6 +236,7 @@ void main ()
       dst.a = 1.0 - dst.a;
 #endif
       imageStore(OutputFrag, storePos, dst);
+    }
     }
   }
 }
