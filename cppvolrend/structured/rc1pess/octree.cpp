@@ -40,6 +40,11 @@ void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDep
 
 		// Create child node
 		node->children[i] = new OctreeNode(childBounds);
+		
+		// Print child bounds
+		std::cout << "Bounds for child " << i << ":" << std::endl;
+		std::cout << "Min(x,y,z) = " << "(" << childBounds.min.x << "," << childBounds.min.y << "," << childBounds.min.z << ")" << std::endl;
+		std::cout << "Max(x,y,z) = " << "(" << childBounds.max.x << "," << childBounds.max.y << "," << childBounds.max.z << ")" << std::endl;
 
 		// Check if child node contains any data
 		node->children[i]->isEmpty = checkIfEmpty(volume, childBounds);
@@ -51,9 +56,9 @@ void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDep
 
 // Compute the child bounds based on its index
 AABB computeChildBounds(const AABB& parentBounds, int childIndex) {
-	glm::vec3 childSize = (parentBounds.max - parentBounds.min) * 0.5f;
+	glm::vec3 childSize = (parentBounds.max - parentBounds.min + glm::vec3(1,1,1)) * 0.5f;
 	glm::vec3 offset = computeOffset(childIndex, childSize);
-	return AABB(parentBounds.min + offset, parentBounds.min + offset + childSize);
+	return AABB(parentBounds.min + offset, parentBounds.min + offset + childSize - glm::vec3(1,1,1));
 }
 
 // Check if node is empty
@@ -76,9 +81,9 @@ bool checkIfEmpty(vis::StructuredGridVolume* volume, const AABB& bounds) {
 
 // Calculate child axis offsets based on child index, using bit shifting
 glm::vec3 computeOffset(int childIndex, glm::vec3 size) {
-	float xOffset = (childIndex & 1) ? size.x * 0.5f : 0.0f;
-	float yOffset = (childIndex & 2) ? size.y * 0.5f : 0.0f;
-	float zOffset = (childIndex & 4) ? size.z * 0.5f : 0.0f;
+	float xOffset = (childIndex & 1) ? size.x : 0.0f;
+	float yOffset = (childIndex & 2) ? size.y : 0.0f;
+	float zOffset = (childIndex & 4) ? size.z : 0.0f;
 
 	return glm::vec3(xOffset, yOffset, zOffset);
 }

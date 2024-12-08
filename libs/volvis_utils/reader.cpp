@@ -55,7 +55,6 @@ namespace vis
     else if (extension.compare("dat") == 0) {
       ret = readdat(filepath);
     }
-    printf("DONE\n");
 
     return ret;
   }
@@ -255,7 +254,7 @@ namespace vis
 
       AABB volumeBox = AABB(glm::vec3(0, 0, 0), glm::vec3(fw-1, fh-1, fd-1));
       OctreeNode node = OctreeNode(volumeBox);
-      BuildOctree(&node, sg_ret, 2, 0);
+      BuildOctree(&node, sg_ret, 1, 0);
       std::cout << "Octree built!" << std::endl;
 	  std::vector<GPUOctreeNode> flatTree;
 	  FlattenOctree(&node, flatTree);
@@ -269,54 +268,7 @@ namespace vis
 	  glBindBuffer(GL_SHADER_STORAGE_BUFFER, octreeSSBO);
 	  glBufferData(GL_SHADER_STORAGE_BUFFER, flatTree.size() * sizeof(GPUOctreeNode), flatTree.data(), GL_STATIC_DRAW); // flatTree.size() * sizeof(GPUOctreeNode)
 	  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, octreeSSBO);
-	  
-	//   glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-	//   GLint bufferSize = 0;
-	//   glGetBufferParameteriv(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE, &bufferSize);
-	//   GLuint numElements = bufferSize / sizeof(GPUOctreeNode);
-	//   std::cout << "NUMBER OF ELEMS: " << numElements << std::endl;
-
-
-		// Map the buffer to read its content
-		// GPUOctreeNode* mappedData = (GPUOctreeNode*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-
-		// if (mappedData == nullptr) {
-		// 	std::cerr << "Failed to map buffer for reading." << std::endl;
-		// } else {
-
-			
-		// 	// Check first element (or loop through the buffer to validate)
-		// 	int interm_count = 0;
-		// 	int step = 0;
-		// 	for (size_t i = 0; i < 129537; i++)
-		// 	{
-		// 		if (interm_count = 8) {
-		// 			interm_count = 0;
-		// 			step++;
-		// 		}
-		// 		if (mappedData[step].childIndices[interm_count] < -1) {
-		// 			std::cout << "FOUND NEG: " << mappedData[step].childIndices[interm_count] << std::endl;
-		// 		}
-		// 		interm_count++;
-
-		// 	}
-		// 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);  // Unmap when done
-		// }
-
-
-
-
-
-
-
-
-
-    //   // std::cout << "Print tree (empty status):" << std::endl;
-    //   // printEmptyNodes(&node, 0);
-    //   int arr[2] = {0,0};
-    //   countEmptyNodes(&node, arr);
-    //   std::cout << "Empty nodes: " << arr[0] << "/" << arr[1] << std::endl;
+	  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
       iffile.close();
       printf("Finished -> Read Volume From .raw File\n");
