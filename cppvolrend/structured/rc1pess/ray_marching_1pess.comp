@@ -176,8 +176,8 @@ void main ()
 #endif
 
       // World position at tnear, translated to the volume [0, VolumeGridSize]
-    //   vec3 wld_pos = r.Origin + r.Dir * tnear;
-      vec3 wld_pos = my_intersect;
+      vec3 wld_pos = r.Origin + r.Dir * tnear;
+    //   vec3 wld_pos = my_intersect;
     //   vec3 wld_pos = my_intersect;
       // Texture position
       vec3 tex_pos = wld_pos + (VolumeGridSize * 0.5);
@@ -194,6 +194,15 @@ void main ()
         // Get normalized density from volume
         float density = texture(TexVolume, s_tex_pos / VolumeGridSize).r;
         
+        // Skip empty space if the density is below the threshold
+        // if (density < 0.72 || density > 0.79)
+        if (density < 0.15)
+        {
+            // Increment step and skip this voxel
+            s = s + h;
+            continue;
+        }
+
         // Get color from transfer function given the normalized density
         vec4 src = 
           //vec4(density)
