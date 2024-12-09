@@ -43,6 +43,6 @@ struct GPUOctreeNode {
 	int isEmpty;
 };
 
-void FlattenOctree(OctreeNode* node, std::vector<GPUOctreeNode>& flatTree, int parentIndex = -1);
+void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctreeNode>& flatTree);
 
 #endif // OCTREE_H

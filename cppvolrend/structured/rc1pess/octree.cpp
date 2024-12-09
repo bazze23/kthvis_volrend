@@ -86,21 +86,21 @@ glm::vec3 computeOffset(int childIndex, glm::vec3 size) {
 	return glm::vec3(xOffset, yOffset, zOffset);
 }
 
-void FlattenOctree(OctreeNode* node, std::vector<GPUOctreeNode>& flatTree, int parentIndex) {
-	GPUOctreeNode gpuNode;
-	gpuNode.minBounds = node->bounds.min;
-	gpuNode.maxBounds = node->bounds.max;
-	gpuNode.isLeaf = node->isLeaf? 1 : 0;
-	gpuNode.isEmpty = node->isEmpty? 1 : 0;
+void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctreeNode>& flatTree) {
+	gpuNode->minBounds = node->bounds.min;
+	gpuNode->maxBounds = node->bounds.max;
+	gpuNode->isLeaf = node->isLeaf? 1 : 0;
+	gpuNode->isEmpty = node->isEmpty? 1 : 0;
+
+	flatTree.push_back(*gpuNode);
 
 	if (!node->isLeaf) {
 		for (int i = 0; i < 8; i++) {
-			gpuNode.childIndices[i] = flatTree.size() + 1 + i;
-			FlattenOctree(node->children[i], flatTree, flatTree.size());
+			GPUOctreeNode tmp;
+			gpuNode->childIndices[i] = flatTree.size();
+			FlattenOctree(node->children[i], &tmp, flatTree);	// DFS, left to right
 		}
 	} else {
-		std::fill(std::begin(gpuNode.childIndices), std::end(gpuNode.childIndices), -1);
+		std::fill(std::begin(gpuNode->childIndices), std::end(gpuNode->childIndices), -1);
 	}
-
-	flatTree.push_back(gpuNode);
 }
