@@ -23,6 +23,8 @@ struct AABB {
 
 // Octree
 struct OctreeNode {
+	int minVal;
+	int maxVal;
 	bool isLeaf;             // True if node has no children
 	bool isEmpty;            // True if node does not contain relevant data
 	AABB bounds;             // Bounds in 3D space for this node

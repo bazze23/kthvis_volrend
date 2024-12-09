@@ -20,7 +20,7 @@ glm::vec3 AABB::size() const {
 	return max - min;
 }
 
-OctreeNode::OctreeNode(const AABB& box) : isLeaf(true), isEmpty(false), bounds(box) {
+OctreeNode::OctreeNode(const AABB& box) : minVal(0), maxVal(0), isLeaf(true), isEmpty(false), bounds(box) {
 	std::fill(std::begin(children), std::end(children), nullptr); // Set all pointers to nullptr
 }
 
