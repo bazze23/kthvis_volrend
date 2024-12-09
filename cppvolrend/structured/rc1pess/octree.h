@@ -23,8 +23,8 @@ struct AABB {
 
 // Octree
 struct OctreeNode {
-	int minVal;
-	int maxVal;
+	float minVal;
+	float maxVal;
 	bool isLeaf;             // True if node has no children
 	bool isEmpty;            // True if node does not contain relevant data
 	AABB bounds;             // Bounds in 3D space for this node
@@ -38,6 +38,8 @@ struct OctreeNode {
 void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDepth, int currentDepth);
 
 struct GPUOctreeNode {
+	float minVal;
+	float maxVal;
 	glm::vec3 minBounds;
 	glm::vec3 maxBounds;
 	int childIndices[8]; // -1 if no child
