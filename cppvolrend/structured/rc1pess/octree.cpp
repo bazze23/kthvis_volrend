@@ -26,11 +26,12 @@ OctreeNode::OctreeNode(const AABB& box) : isLeaf(true), isEmpty(false), bounds(b
 
 void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDepth, int currentDepth) {
 
-	// Base case, max depth reached or empty node
+	// Base case, max depth reached or empty node (should we keep constructing tree if a node is empty, i.e. do we want a balanced tree?)
 	if (currentDepth >= maxDepth || node->isEmpty) {
 		node->isLeaf = true;
 		return;
 	}
+	currentDepth = currentDepth + 1;
 
 	// Subdivide node
 	node->isLeaf = false;
@@ -41,16 +42,16 @@ void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDep
 		// Create child node
 		node->children[i] = new OctreeNode(childBounds);
 		
-		// Print child bounds
-		std::cout << "Bounds for child " << i << ":" << std::endl;
-		std::cout << "Min(x,y,z) = " << "(" << childBounds.min.x << "," << childBounds.min.y << "," << childBounds.min.z << ")" << std::endl;
-		std::cout << "Max(x,y,z) = " << "(" << childBounds.max.x << "," << childBounds.max.y << "," << childBounds.max.z << ")" << std::endl;
+		// // Print child bounds
+		// std::cout << "Bounds for child " << i << ":" << std::endl;
+		// std::cout << "Min(x,y,z) = " << "(" << childBounds.min.x << "," << childBounds.min.y << "," << childBounds.min.z << ")" << std::endl;
+		// std::cout << "Max(x,y,z) = " << "(" << childBounds.max.x << "," << childBounds.max.y << "," << childBounds.max.z << ")" << std::endl;
 
 		// Check if child node contains any data
 		node->children[i]->isEmpty = checkIfEmpty(volume, childBounds);
 
 		// Recursively build the child node
-		BuildOctree(node->children[i], volume, maxDepth, ++currentDepth);
+		BuildOctree(node->children[i], volume, maxDepth, currentDepth);
 	}
 }
 
@@ -63,16 +64,13 @@ AABB computeChildBounds(const AABB& parentBounds, int childIndex) {
 
 // Check if node is empty
 bool checkIfEmpty(vis::StructuredGridVolume* volume, const AABB& bounds) {
-	// int allowedPoints = 100;
-	// int pointCount = 0;
 	for (size_t x = 0; x < bounds.max.x; x++) {
 		for (size_t y = 0; y < bounds.max.y; y++) {
 			for (size_t z = 0; z < bounds.max.z; z++) {
-				// if (volume->GetNormalizedSample(x, y, z) > 0.19607843137) return false;	// Non-empty if there exists at least one sample that exceeds threshold
-				// if (volume->GetAbsoluteSample(x, y, z) != 35 && volume->GetAbsoluteSample(x, y, z) != 0) return false;	// Non-empty if there exists at least one sample that exceeds threshold
-				if (volume->GetNormalizedSample(x, y, z) > 0.05) return false; // Non-empty if there exists at least one sample that exceeds threshold
-				                                                               // if (volume->GetNormalizedSample(x, y, z) > 0.05) ++pointCount;	// Non-empty if there exists at least one sample that exceeds threshold
-				                                                               // if (pointCount > allowedPoints) return false;
+				// Non-empty if there exists at least one sample that exceeds threshold (arbitrary value)
+				if (volume->GetNormalizedSample(x, y, z) > 0.05) return false;
+				// if (volume->GetAbsoluteSample(x, y, z) != 0 && volume->GetAbsoluteSample(x, y, z) != 35) return false;
+
 			}
 		}
 	}
