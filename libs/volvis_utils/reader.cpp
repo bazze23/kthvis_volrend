@@ -12,7 +12,6 @@
 #include <array>
 
 #include <volvis_utils/transferfunction1d.h>
-#include "../cppvolrend/structured/rc1pess/octree.h"
 
 namespace vis
 {
@@ -159,43 +158,6 @@ namespace vis
     return ret;
   }
 
-  // Recursively print empty status for octree node
-  void printEmptyStatus(OctreeNode* node, int level) {
-    ++level;
-    for (size_t i = 0; i < 8; i++) {
-      if (node->isLeaf == true) continue;
-
-      std::cout << "Level: " << level << ", Child " << i << " empty: " << node->children[i]->isEmpty << std::endl;
-    
-      printEmptyStatus(node->children[i], level);
-    }
-  }
-
-  // Recursively print empty nodes of an octree
-  void printEmptyNodes(OctreeNode* node, int level) {
-    ++level;
-    for (size_t i = 0; i < 8; i++) {
-      if (node->isLeaf == true) continue;
-
-      if (node->children[i]->isEmpty) {
-        std::cout << "Level: " << level << ", Child: " << i << std::endl;
-      }
-    
-      printEmptyNodes(node->children[i], level);
-    }
-  }
-
-  // Recursively count empty nodes in octree
-  void countEmptyNodes(OctreeNode* node, int* res) {
-    res[1]++;
-    if (node->isEmpty) {
-      res[0]++;
-    }
-    for (size_t i = 0; i < 8; i++) {
-      if (!node->isLeaf) countEmptyNodes(node->children[i], res);
-    }
-  }
-
   StructuredGridVolume* VolumeReader::readraw (std::string filepath)
   {
     StructuredGridVolume* sg_ret = nullptr;
@@ -251,38 +213,35 @@ namespace vis
       printf("  - Volume Size     : [%d, %d, %d]\n", fw, fh, fd);
       printf("  - Volume Byte Size: %d\n", bytes_per_value);
 
-      AABB volumeBox = AABB(glm::vec3(0, 0, 0), glm::vec3(fw-1, fh-1, fd-1));
-      OctreeNode node = OctreeNode(volumeBox);
-      BuildOctree(&node, sg_ret, 2, 0);
-      std::cout << "Octree built!" << std::endl;
-	  std::vector<GPUOctreeNode> flatTree;
-	  GPUOctreeNode tmp;
-	  FlattenOctree(&node, &tmp, flatTree);
-      std::cout << "Octree flattened!" << std::endl;
-	  std::cout << "Flattened tree size: " << flatTree.size() << std::endl;
-	  for (size_t i = 0; i < flatTree.size(); i++)
-	  {
-		std::cout << "minBounds at idx " << i << " (x,y,z):" << "("
-		<< flatTree[i].minBounds.x << "," << flatTree[i].minBounds.y << "," << flatTree[i].minBounds.z << ")" << std::endl;
-		std::cout << "maxBounds at idx " << i << " (x,y,z):" << "("
-		<< flatTree[i].maxBounds.x << "," << flatTree[i].maxBounds.y << "," << flatTree[i].maxBounds.z << ")" << std::endl;
-	  }
-	//   for (size_t i = 0; i < 8; i++)
+    //   AABB volumeBox = AABB(glm::vec3(0, 0, 0), glm::vec3(fw-1, fh-1, fd-1));
+    //   OctreeNode node = OctreeNode(volumeBox);
+    //   BuildOctree(&node, sg_ret, 2, 0);
+    //   std::cout << "Octree built!" << std::endl;
+	//   std::vector<GPUOctreeNode> flatTree;
+	//   GPUOctreeNode tmp;
+	//   FlattenOctree(&node, &tmp, flatTree);
+    //   std::cout << "Octree flattened!" << std::endl;
+	//   std::cout << "Flattened tree size: " << flatTree.size() << std::endl;
+	//   for (size_t i = 0; i < flatTree.size(); i++)
 	//   {
-	// 	std::cout << "Index of child " << i << ":" << flatTree[10].isLeaf << std::endl;
+	// 	std::cout << "minBounds at idx " << i << " (x,y,z):" << "("
+	// 	<< flatTree[i].minBounds.x << "," << flatTree[i].minBounds.y << "," << flatTree[i].minBounds.z << ")" << std::endl;
+	// 	std::cout << "maxBounds at idx " << i << " (x,y,z):" << "("
+	// 	<< flatTree[i].maxBounds.x << "," << flatTree[i].maxBounds.y << "," << flatTree[i].maxBounds.z << ")" << std::endl;
 	//   }
-	  
-	  
-      int arr[2] = {0,0};
-      countEmptyNodes(&node, arr);
-      std::cout << "Empty nodes: " << arr[0] << "/" << arr[1] << std::endl;
-	  
-	  GLuint octreeSSBO;
-	  glGenBuffers(1, &octreeSSBO);
-	  glBindBuffer(GL_SHADER_STORAGE_BUFFER, octreeSSBO);
-	  glBufferData(GL_SHADER_STORAGE_BUFFER, flatTree.size() * sizeof(GPUOctreeNode), flatTree.data(), GL_STATIC_DRAW); // flatTree.size() * sizeof(GPUOctreeNode)
-	  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, octreeSSBO);
-	  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	//   for (size_t i = 0; i < flatTree.size(); i++)
+	// 	{
+	// 		std::cout << "minVal at idx " << i << ": " << flatTree[i].minVal << std::endl;
+	// 		std::cout << "maxVal at idx " << i << ": " << flatTree[i].maxVal << std::endl;
+	// 	}
+
+
+	//   GLuint octreeSSBO;
+	//   glGenBuffers(1, &octreeSSBO);
+	//   glBindBuffer(GL_SHADER_STORAGE_BUFFER, octreeSSBO);
+	//   glBufferData(GL_SHADER_STORAGE_BUFFER, flatTree.size() * sizeof(GPUOctreeNode), flatTree.data(), GL_STATIC_DRAW); // flatTree.size() * sizeof(GPUOctreeNode)
+	//   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, octreeSSBO);
+	//   glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
       iffile.close();
       printf("Finished -> Read Volume From .raw File\n");
