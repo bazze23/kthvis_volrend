@@ -190,7 +190,6 @@ namespace vis
     res[1]++;
     if (node->isEmpty) {
       res[0]++;
-      return;
     }
     for (size_t i = 0; i < 8; i++) {
       if (!node->isLeaf) countEmptyNodes(node->children[i], res);
@@ -254,10 +253,20 @@ namespace vis
 
       AABB volumeBox = AABB(glm::vec3(0, 0, 0), glm::vec3(fw-1, fh-1, fd-1));
       OctreeNode node = OctreeNode(volumeBox);
-      BuildOctree(&node, sg_ret, 1, 0);
+      BuildOctree(&node, sg_ret, 4, 0);
       std::cout << "Octree built!" << std::endl;
 	  std::vector<GPUOctreeNode> flatTree;
 	  FlattenOctree(&node, flatTree);
+      std::cout << "Octree flattened!" << std::endl;
+	  std::cout << "Flattened tree size: " << flatTree.size() << std::endl;
+	//   for (size_t i = 0; i < flatTree.size(); i++)
+	//   {
+	// 	std::cout << "minBounds at idx " << i << " (x,y,z):" << "("
+	// 	<< flatTree[i].minBounds.x << "," << flatTree[i].minBounds.y << "," << flatTree[i].minBounds.z << ")" << std::endl;
+	// 	std::cout << "maxBounds at idx " << i << " (x,y,z):" << "("
+	// 	<< flatTree[i].maxBounds.x << "," << flatTree[i].maxBounds.y << "," << flatTree[i].maxBounds.z << ")" << std::endl;
+	//   }
+	  
 	  
       int arr[2] = {0,0};
       countEmptyNodes(&node, arr);
