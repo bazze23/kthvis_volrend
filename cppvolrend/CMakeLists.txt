@@ -26,7 +26,7 @@ add_executable(cppvolrend
                app_glfw.cpp                                                    app_glfw.h
                renderingmanager.cpp                                            renderingmanager.h
                volrenderbase.cpp                                               volrenderbase.h
-               structured/rc1pess/octree.cpp                                   structured/rc1pess/octree.h
+               structured/rc1pisoadaptspace/octree.cpp                         structured/rc1pisoadaptspace/octree.h
                
                # Null Bounding Box Grid
                volrendernull.cpp                                               volrendernull.h
@@ -34,8 +34,8 @@ add_executable(cppvolrend
                # GPU Image Order Ray Casting
                structured/rc1pass/rc1prenderer.cpp                             structured/rc1pass/rc1prenderer.h
                
-               # GPU Image Order Ray Casting (with empty space skipping)
-               structured/rc1pess/rc1pessrenderer.cpp                          structured/rc1pess/rc1pessrenderer.h
+               # GPU Image Order Iso Ray Casting with adaptive step size and empty space skipping
+               structured/rc1pisoadaptspace/rc1pisoadaptspacerenderer.cpp      structured/rc1pisoadaptspace/rc1pisoadaptspacerenderer.h
 
                # GPU Image Order Iso Ray Casting with adaptive step size
                structured/rc1pisoadapt/rc1pisoadaptrenderer.cpp                structured/rc1pisoadapt/rc1pisoadaptrenderer.h

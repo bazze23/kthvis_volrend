@@ -23,7 +23,7 @@
 #include "structured/rc1pass/rc1prenderer.h"
 #include "structured/rc1pcrtgt/crtgtrenderer.h"
 #include "structured/rc1pdosct/dosrcrenderer.h"
-#include "structured/rc1pess/rc1pessrenderer.h"
+#include "structured/rc1pisoadaptspace/rc1pisoadaptspacerenderer.h"
 #include "structured/rc1pextbsd/ebsrenderer.h"
 #include "structured/rc1pisoadapt/rc1pisoadaptrenderer.h"
 #include "structured/rc1pvctsg/vctrenderer.h"
