@@ -7,11 +7,11 @@
 
 #include "../../volrenderbase.h"
 
-class RayCasting1PassIsoAdapt : public BaseVolumeRenderer
+class RayCasting1PassIsoAdaptSpace : public BaseVolumeRenderer
 {
 public:
-  RayCasting1PassIsoAdapt();
-  virtual ~RayCasting1PassIsoAdapt();
+  RayCasting1PassIsoAdaptSpace();
+  virtual ~RayCasting1PassIsoAdaptSpace();
   
   virtual const char* GetName();
   virtual const char* GetAbbreviationName();

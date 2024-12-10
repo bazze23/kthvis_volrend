@@ -10,7 +10,7 @@
 #include <math_utils/utils.h>
 
 
-RayCasting1PassIsoAdapt::RayCasting1PassIsoAdapt()
+RayCasting1PassIsoAdaptSpace::RayCasting1PassIsoAdaptSpace()
   :cp_shader_rendering(nullptr)
   ,m_u_isovalue(0.5f)
   ,m_u_step_size_small(0.05f)
@@ -22,30 +22,30 @@ RayCasting1PassIsoAdapt::RayCasting1PassIsoAdapt()
 }
 
 
-RayCasting1PassIsoAdapt::~RayCasting1PassIsoAdapt()
+RayCasting1PassIsoAdaptSpace::~RayCasting1PassIsoAdaptSpace()
 {
 }
 
 
-const char* RayCasting1PassIsoAdapt::GetName()
+const char* RayCasting1PassIsoAdaptSpace::GetName()
 {
   return "1-Pass - Isosurface Raycaster Adaptive";
 }
 
 
-const char* RayCasting1PassIsoAdapt::GetAbbreviationName()
+const char* RayCasting1PassIsoAdaptSpace::GetAbbreviationName()
 {
   return "iso";
 }
 
 
-vis::GRID_VOLUME_DATA_TYPE RayCasting1PassIsoAdapt::GetDataTypeSupport()
+vis::GRID_VOLUME_DATA_TYPE RayCasting1PassIsoAdaptSpace::GetDataTypeSupport()
 {
   return vis::GRID_VOLUME_DATA_TYPE::STRUCTURED;
 }
 
 
-void RayCasting1PassIsoAdapt::Clean()
+void RayCasting1PassIsoAdaptSpace::Clean()
 {
   if (cp_shader_rendering) delete cp_shader_rendering;
   cp_shader_rendering = nullptr;
@@ -56,7 +56,7 @@ void RayCasting1PassIsoAdapt::Clean()
 }
 
 
-bool RayCasting1PassIsoAdapt::Init(int swidth, int sheight)
+bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
 {
   //Clean before we continue
   if (IsBuilt()) Clean();
@@ -99,7 +99,7 @@ bool RayCasting1PassIsoAdapt::Init(int swidth, int sheight)
 
   cp_shader_rendering->BindUniforms();
   cp_shader_rendering->Unbind();
-  gl::ExitOnGLError("RayCasting1PassIsoAdapt: Error on Preparing Models and Shaders");
+  gl::ExitOnGLError("RayCasting1PassIsoAdaptSpace: Error on Preparing Models and Shaders");
 
 
   /////////////////////////////////
@@ -114,14 +114,14 @@ bool RayCasting1PassIsoAdapt::Init(int swidth, int sheight)
 }
 
 
-void RayCasting1PassIsoAdapt::ReloadShaders()
+void RayCasting1PassIsoAdaptSpace::ReloadShaders()
 {
   cp_shader_rendering->Reload();
   m_rdr_frame_to_screen.ClearShaders();
 }
 
 
-bool RayCasting1PassIsoAdapt::Update(vis::Camera* camera)
+bool RayCasting1PassIsoAdaptSpace::Update(vis::Camera* camera)
 {
   cp_shader_rendering->Bind();
 
@@ -169,12 +169,12 @@ bool RayCasting1PassIsoAdapt::Update(vis::Camera* camera)
   cp_shader_rendering->BindUniforms();
 
   gl::Shader::Unbind();
-  gl::ExitOnGLError("RayCasting1PassIsoAdapt: After Update.");
+  gl::ExitOnGLError("RayCasting1PassIsoAdaptSpace: After Update.");
   return true;
 }
 
 
-void RayCasting1PassIsoAdapt::Redraw()
+void RayCasting1PassIsoAdaptSpace::Redraw()
 {
   m_rdr_frame_to_screen.ClearTexture();
 
@@ -188,7 +188,7 @@ void RayCasting1PassIsoAdapt::Redraw()
 }
 
 
-void RayCasting1PassIsoAdapt::FillParameterSpace(ParameterSpace & pspace)
+void RayCasting1PassIsoAdaptSpace::FillParameterSpace(ParameterSpace & pspace)
 {
   pspace.ClearParameterDimensions();
   pspace.AddParameterDimension(new ParameterRangeFloat("StepSizeSmall", &m_u_step_size_small, 0.01f, 0.25f, 0.05f));
@@ -197,7 +197,7 @@ void RayCasting1PassIsoAdapt::FillParameterSpace(ParameterSpace & pspace)
 }
 
 
-void RayCasting1PassIsoAdapt::SetImGuiComponents()
+void RayCasting1PassIsoAdaptSpace::SetImGuiComponents()
 {
   ImGui::Separator();
   

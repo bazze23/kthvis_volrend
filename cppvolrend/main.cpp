@@ -57,8 +57,8 @@ int main(int argc, char** argv) {
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// 1-pass - Ray Casting - GLSL
 	RenderingManager::Instance()->AddVolumeRenderer(new RayCasting1Pass());
-	RenderingManager::Instance()->AddVolumeRenderer(new RayCasting1PassEmptySpaceSkipping());
 	RenderingManager::Instance()->AddVolumeRenderer(new RayCasting1PassIsoAdapt());
+	RenderingManager::Instance()->AddVolumeRenderer(new RayCasting1PassIsoAdaptSpace());
 	RenderingManager::Instance()->AddVolumeRenderer(new RC1PConeLightGroundTruthSteps());
 	RenderingManager::Instance()->AddVolumeRenderer(new RC1PConeTracingDirOcclusionShading());
 	RenderingManager::Instance()->AddVolumeRenderer(new RC1PExtinctionBasedShading());
