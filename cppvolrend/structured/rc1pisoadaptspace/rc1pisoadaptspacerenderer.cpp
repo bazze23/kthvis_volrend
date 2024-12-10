@@ -29,7 +29,7 @@ RayCasting1PassIsoAdaptSpace::~RayCasting1PassIsoAdaptSpace()
 
 const char* RayCasting1PassIsoAdaptSpace::GetName()
 {
-  return "1-Pass - Isosurface Raycaster Adaptive";
+  return "1-Pass - Isosurface Raycaster Adaptive ESS";
 }
 
 
