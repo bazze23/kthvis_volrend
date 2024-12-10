@@ -37,14 +37,16 @@ struct OctreeNode {
 // Recursively build the octree based on a volume
 void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDepth, int currentDepth);
 
-struct GPUOctreeNode {
-	float minVal;
-	float maxVal;
-	glm::vec3 minBounds;
-	glm::vec3 maxBounds;
-	int childIndices[8]; // -1 if no child
-	int isLeaf;
-	int isEmpty;
+struct alignas(16) GPUOctreeNode {
+    glm::vec3 minBounds;   // 12 bytes
+    float padding1;        // 4 bytes for alignment
+    glm::vec3 maxBounds;   // 12 bytes
+    float padding2;        // 4 bytes for alignment
+    float minVal;          // 4 bytes
+    float maxVal;          // 4 bytes
+    int childIndices[8];   // 32 bytes
+    int isLeaf;            // 4 bytes
+    int isEmpty;           // 4 bytes
 };
 
 void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctreeNode>& flatTree);

@@ -109,10 +109,10 @@ glm::vec3 computeOffset(int childIndex, glm::vec3 size) {
 }
 
 void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctreeNode>& flatTree) {
-	gpuNode->minVal = node->minVal;
-	gpuNode->maxVal = node->maxVal;
 	gpuNode->minBounds = node->bounds.min;
 	gpuNode->maxBounds = node->bounds.max;
+	gpuNode->minVal = node->minVal;
+	gpuNode->maxVal = node->maxVal;
 	gpuNode->isLeaf = node->isLeaf ? 1 : 0;
 	gpuNode->isEmpty = node->isEmpty ? 1 : 0;
 

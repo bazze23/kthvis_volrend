@@ -1,0 +1,50 @@
+#version 430
+
+struct GPUOctreeNode {
+    vec3 minBounds;        // 12 bytes
+    float padding1;        // 4 bytes for alignment
+    vec3 maxBounds;        // 12 bytes
+    float padding2;        // 4 bytes for alignment
+    float minVal;          // 4 bytes
+    float maxVal;          // 4 bytes
+    int childIndices[8];   // 32 bytes
+    int isLeaf;            // 4 bytes
+    int isEmpty;           // 4 bytes
+};
+
+layout(std430, binding = 16) buffer OctreeNodes {
+    GPUOctreeNode octreeNodes[];
+};
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+layout (rgba16f, binding = 0) uniform image2D OutputFrag;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// From structured/_common_shaders/ray_bbox_intersection.comp
+struct Ray { vec3 Origin; vec3 Dir; };
+bool RayAABBIntersection (vec3 vert_eye, vec3 vert_dir, vec3 vol_scaled_dim,
+                          out Ray r, out float rtnear, out float rtfar);
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void main() {
+    ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 imageSize = imageSize(OutputFrag);
+
+    // Simple bounds check
+    if (storePos.x < imageSize.x && storePos.y < imageSize.y) {
+        // Get the node index (e.g., based on the pixel's x position)
+        int nodeIndex = storePos.x; // Simple linear indexing for now
+        if (nodeIndex < octreeNodes.length()) {
+            GPUOctreeNode node = octreeNodes[nodeIndex];
+
+            // Store the node's min/max values as a color (just for testing)
+            // Using the minVal and maxVal to generate a color
+            vec4 color = vec4(node.minVal, node.maxVal, 0, 1.0);
+
+            // Output to the image
+            imageStore(OutputFrag, storePos, color);
+        } else {
+            imageStore(OutputFrag, storePos, vec4(0,0,1,1));
+        }
+    }
+}

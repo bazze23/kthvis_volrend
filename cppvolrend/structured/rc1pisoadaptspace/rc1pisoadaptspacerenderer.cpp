@@ -84,21 +84,23 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
   glm::vec3 minCorner = {0,0,0};
   glm::vec3 maxCorner = vol_resolution-glm::vec3(1,1,1);
   AABB bounds(minCorner, maxCorner);
-  OctreeNode node(bounds);
-  std::cout << "Constructing octree...";
-  BuildOctree(&node,m_ext_data_manager->GetCurrentStructuredVolume(),2,0);
+  OctreeNode root(bounds);
+  std::cout << "Constructing octree (root dim " << vol_resolution.x << "x" << vol_resolution.y << "x" << vol_resolution.z << ")...";
+  BuildOctree(&root,m_ext_data_manager->GetCurrentStructuredVolume(),2,0);
   std::cout << " done" << std::endl;
 
+  // - flatten octree
   std::cout << "Flattening octree...";
   GPUOctreeNode tmpNode;
   std::vector<GPUOctreeNode> flatTree;
-  FlattenOctree(&node, &tmpNode, flatTree);
-  std::cout << " done" << std::endl;
+  FlattenOctree(&root, &tmpNode, flatTree);
+  std::cout << " done (size=" << flatTree.size() << ")" << std::endl;
 
   // - load shaders
   cp_shader_rendering = new gl::ComputeShader();
   cp_shader_rendering->AddShaderFile(CPPVOLREND_DIR"structured/_common_shaders/ray_bbox_intersection.comp");
   cp_shader_rendering->AddShaderFile(CPPVOLREND_DIR"structured/rc1pisoadaptspace/ray_marching_1p_iso_adapt_space.comp");
+//   cp_shader_rendering->AddShaderFile(CPPVOLREND_DIR"structured/rc1pisoadaptspace/test_shader.comp");
   cp_shader_rendering->LoadAndLink();
   cp_shader_rendering->Bind();
 
@@ -107,6 +109,14 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
     cp_shader_rendering->SetUniformTexture3D("TexVolume", m_ext_data_manager->GetCurrentVolumeTexture()->GetTextureID(), 1);
   if (m_apply_gradient_shading && m_ext_data_manager->GetCurrentGradientTexture())
     cp_shader_rendering->SetUniformTexture3D("TexVolumeGradient", m_ext_data_manager->GetCurrentGradientTexture()->GetTextureID(), 2);
+
+  // - send to GPU
+  GLuint ssbo;
+  glGenBuffers(1, &ssbo);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, flatTree.size() * sizeof(GPUOctreeNode), flatTree.data(), GL_STATIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 16, ssbo);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
   // - let the shader know about the uniform grid
   cp_shader_rendering->SetUniform("VolumeGridResolution", vol_resolution);
