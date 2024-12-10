@@ -1,5 +1,6 @@
 #include "../../defines.h"
 #include "rc1pisoadaptspacerenderer.h"
+#include "octree.h"
 
 #include <vis_utils/camera.h>
 #include <volvis_utils/datamanager.h>
@@ -78,6 +79,21 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
                                       m_ext_data_manager->GetCurrentStructuredVolume()->GetScaleZ());
 
   glm::vec3 vol_aabb = vol_resolution * vol_voxelsize;
+
+  // - construct octree
+  glm::vec3 minCorner = {0,0,0};
+  glm::vec3 maxCorner = vol_resolution-glm::vec3(1,1,1);
+  AABB bounds(minCorner, maxCorner);
+  OctreeNode node(bounds);
+  std::cout << "Constructing octree...";
+  BuildOctree(&node,m_ext_data_manager->GetCurrentStructuredVolume(),2,0);
+  std::cout << " done" << std::endl;
+
+  std::cout << "Flattening octree...";
+  GPUOctreeNode tmpNode;
+  std::vector<GPUOctreeNode> flatTree;
+  FlattenOctree(&node, &tmpNode, flatTree);
+  std::cout << " done" << std::endl;
 
   // - load shaders
   cp_shader_rendering = new gl::ComputeShader();
