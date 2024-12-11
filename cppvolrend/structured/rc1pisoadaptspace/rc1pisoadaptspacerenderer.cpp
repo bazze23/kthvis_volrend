@@ -100,23 +100,34 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
   cp_shader_rendering = new gl::ComputeShader();
   cp_shader_rendering->AddShaderFile(CPPVOLREND_DIR"structured/_common_shaders/ray_bbox_intersection.comp");
   cp_shader_rendering->AddShaderFile(CPPVOLREND_DIR"structured/rc1pisoadaptspace/ray_marching_1p_iso_adapt_space.comp");
-//   cp_shader_rendering->AddShaderFile(CPPVOLREND_DIR"structured/rc1pisoadaptspace/test_shader.comp");
+  // cp_shader_rendering->AddShaderFile(CPPVOLREND_DIR"structured/rc1pisoadaptspace/test_shader.comp");
   cp_shader_rendering->LoadAndLink();
   cp_shader_rendering->Bind();
+
+  // - send octree to GPU
+  GLuint octreeSSBO; // shader storage buffer object
+  glGenBuffers(1, &octreeSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, octreeSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, flatTree.size() * sizeof(GPUOctreeNode), flatTree.data(), GL_STATIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 16, octreeSSBO);
+
+  // - prepare intersected nodes list buffer (for each pixel)
+  int screenWidth = m_ext_rendering_parameters->GetScreenWidth();
+  int screenHeight = m_ext_rendering_parameters->GetScreenHeight();
+  constexpr int MAX_NODES_PER_PIXEL = 32;
+  size_t bufferSize = screenWidth * screenHeight * MAX_NODES_PER_PIXEL * sizeof(IntersectedNode); // One list of intersected nodes per pixel
+  GLuint intersectedNodesSSBO;
+  glGenBuffers(1, &intersectedNodesSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, intersectedNodesSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, nullptr, GL_DYNAMIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 17, intersectedNodesSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
   // - data sets to work on: scalar field and its gradient
   if (m_ext_data_manager->GetCurrentVolumeTexture())
     cp_shader_rendering->SetUniformTexture3D("TexVolume", m_ext_data_manager->GetCurrentVolumeTexture()->GetTextureID(), 1);
   if (m_apply_gradient_shading && m_ext_data_manager->GetCurrentGradientTexture())
     cp_shader_rendering->SetUniformTexture3D("TexVolumeGradient", m_ext_data_manager->GetCurrentGradientTexture()->GetTextureID(), 2);
-
-  // - send to GPU
-  GLuint ssbo;
-  glGenBuffers(1, &ssbo);
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, flatTree.size() * sizeof(GPUOctreeNode), flatTree.data(), GL_STATIC_DRAW);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 16, ssbo);
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
   // - let the shader know about the uniform grid
   cp_shader_rendering->SetUniform("VolumeGridResolution", vol_resolution);
