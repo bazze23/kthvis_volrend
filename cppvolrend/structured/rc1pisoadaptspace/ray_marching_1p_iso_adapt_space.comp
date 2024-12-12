@@ -142,7 +142,7 @@ void main() {
                 if (!((currentNode.maxVal > Isovalue) && (currentNode.minVal < Isovalue))) continue;
 
                 // Save node data if ray intersects it
-                // TODO: we have to make sure we are in a leaf node before adding it!
+                // TODO: we have to make sure we are in a leaf node before adding it, and traverse using stack!
                 bool intersects = RayAABBIntersection(CameraEye, camera_dir, currentNode.maxBounds - currentNode.minBounds, r, tnear, tfar);
                 if (intersects && numIntersectedNodes <= intersectedNodes.length()) {
                     intersectedNodes[numIntersectedNodes] = vec3(tnear, tfar, nodeIndex);
