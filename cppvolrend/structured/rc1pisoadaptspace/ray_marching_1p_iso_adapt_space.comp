@@ -44,7 +44,6 @@ struct GPUOctreeNode {
     float maxVal;          // 4 bytes
     int childIndices[8];   // 32 bytes
     int isLeaf;            // 4 bytes
-    int isEmpty;           // 4 bytes
 };
 
 layout(std430, binding = 16) buffer OctreeNodesBuffer {
@@ -212,3 +211,25 @@ void main() {
         }
     }
 }
+
+// // Main fuction to debug octree
+// void main() {
+//     ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
+//     ivec2 imageSize = imageSize(OutputFrag);
+
+//     // Simple bounds check
+//     if (storePos.x < imageSize.x && storePos.y < imageSize.y) {
+//         // Get the node index (e.g., based on the pixel's x position)
+//         int nodeIndex = storePos.x; // Simple linear indexing for now
+//         if (nodeIndex < octreeNodes.length()) {
+//             GPUOctreeNode node = octreeNodes[nodeIndex];
+
+//             // Store the node's min/max values as a color (just for testing)
+//             // Using the minVal and maxVal to generate a color
+//             vec4 color = vec4(node.minVal, node.maxVal, 0.0, 1.0);
+
+//             // Output to the image
+//             imageStore(OutputFrag, storePos, color);
+//         }
+//     }
+// }

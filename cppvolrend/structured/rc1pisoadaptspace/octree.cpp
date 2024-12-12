@@ -21,7 +21,7 @@ glm::vec3 AABB::size() const {
 	return max - min;
 }
 
-OctreeNode::OctreeNode(const AABB& box) : minVal(0), maxVal(0), isLeaf(true), isEmpty(false), bounds(box) {
+OctreeNode::OctreeNode(const AABB& box) : minVal(0), maxVal(0), isLeaf(true), bounds(box) {
 	std::fill(std::begin(children), std::end(children), nullptr); // Set all pointers to nullptr
 }
 
@@ -37,7 +37,6 @@ void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDep
 	// Subdivide node
 	node->isLeaf = false;
 	for (size_t i = 0; i < 8; i++) {
-		node->isEmpty = false; // Set to false for now, may use later in shader
 
 		// Compute bounds for child node 'i'
 		AABB childBounds = computeChildBounds(node->bounds, i);
@@ -114,7 +113,6 @@ void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctr
 	gpuNode->minVal = node->minVal;
 	gpuNode->maxVal = node->maxVal;
 	gpuNode->isLeaf = node->isLeaf ? 1 : 0;
-	gpuNode->isEmpty = node->isEmpty ? 1 : 0;
 
 	flatTree.push_back(*gpuNode);
 

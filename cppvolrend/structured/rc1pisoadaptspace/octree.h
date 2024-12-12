@@ -26,7 +26,6 @@ struct OctreeNode {
 	float minVal;
 	float maxVal;
 	bool isLeaf;             // True if node has no children
-	bool isEmpty;            // True if node does not contain relevant data
 	AABB bounds;             // Bounds in 3D space for this node
 	OctreeNode* children[8]; // Pointers to children
 
@@ -46,7 +45,6 @@ struct alignas(16) GPUOctreeNode {
     float maxVal;          // 4 bytes
     int childIndices[8];   // 32 bytes
     int isLeaf;            // 4 bytes
-    int isEmpty;           // 4 bytes
 };
 
 void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctreeNode>& flatTree);
