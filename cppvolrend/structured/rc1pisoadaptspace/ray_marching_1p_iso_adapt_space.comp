@@ -47,18 +47,8 @@ struct GPUOctreeNode {
     int isEmpty;           // 4 bytes
 };
 
-struct IntersectedNode {
-	float tnear;      // 4 bytes
-	float tfar;       // 4 bytes
-	int nodeIndex;    // 4 bytes
-	float padding1;   // 4 bytes for alignment
-};
-
 layout(std430, binding = 16) buffer OctreeNodesBuffer {
     GPUOctreeNode octreeNodes[];
-};
-layout(std430, binding = 17) buffer IntersectedNodesBuffer {
-    IntersectedNode intersectedNodes[];
 };
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 layout (rgba16f, binding = 0) uniform image2D OutputFrag;
@@ -112,87 +102,113 @@ vec3 ShadeBlinnPhong (vec3 Tpos, vec3 clr)
   return clr;
 }
 
+void main() {
+    vec3 intersectedNodes[32];
 
-void main ()
-{
-  ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
-  
-  ivec2 size = imageSize(OutputFrag);
-  if (storePos.x < size.x && storePos.y < size.y)
-  {
-    // Get screen position [x, y] and consider centering the pixel by + 0.5
-    vec2 fpos = vec2(storePos) + 0.5;
+    // Get 2D pixel coordinates and image size
+    ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(OutputFrag); // Dimensions of the viewport
 
-    // Transform fpos from [w, h] to [0, 1] to [-1, 1]
-    vec3 VerPos = (vec3(fpos.x / float(size.x), fpos.y / float(size.y), 0.0) * 2.0) - 1.0;
+    // Simple bounds check
+    if (storePos.x < size.x && storePos.y < size.y) {
 
-    // Camera direction
-    vec3 camera_dir = normalize(vec3(VerPos.x * u_TanCameraFovY * u_CameraAspectRatio, VerPos.y * u_TanCameraFovY, -1.0) * mat3(u_CameraLookAt));
 
-    // Find Ray Intersection
-    Ray r; float tnear, tfar;
-    bool inbox = RayAABBIntersection(CameraEye, camera_dir, VolumeGridSize, r, tnear, tfar);
+        // Process ray intersection with the octree
+        int numIntersectedNodes = 0; // Counter for this pixel's intersected nodes
 
-    // If inside volume grid
-    if (inbox)
-    {
-      // Distance to be evaluated
-      float D = abs(tfar - tnear);
+        // Get screen position [x, y] and consider centering the pixel by + 0.5
+        vec2 fpos = vec2(storePos) + 0.5;
 
-      // Initialize Transparency and Radiance color
-      vec4 dst = vec4(0.0);
+        // Transform fpos from [w, h] to [0, 1] to [-1, 1]
+        vec3 VerPos = (vec3(fpos.x / float(size.x), fpos.y / float(size.y), 0.0) * 2.0) - 1.0;
 
-      // World position at tnear, translated to the volume [0, VolumeGridSize]
-      vec3 wld_pos = r.Origin + r.Dir * tnear;
-      // Texture position
-      vec3 tex_pos = wld_pos + (VolumeGridSize * 0.5);
-      
-      // Evaluate from 0 to D...
-      float prevDensity = texture(TexVolume, tex_pos / VolumeGridSize).r;
-      for (float s = 0.0; s < D;)
-      {
-        float CurrentStepSize = (abs(prevDensity - Isovalue) < StepSizeRange) ? StepSizeSmall : StepSizeLarge;
+        // Camera direction
+        vec3 camera_dir = normalize(vec3(VerPos.x * u_TanCameraFovY * u_CameraAspectRatio, VerPos.y * u_TanCameraFovY, -1.0) * mat3(u_CameraLookAt));
 
-        // Get the current step or the remaining interval
-        float h = min(CurrentStepSize, D - s);
-      
-        // Texture position at tnear + (s + h)
-        vec3 s_tex_pos = tex_pos  + r.Dir * (s + h);
-      
-        // Get normalized density from volume
-        float density = texture(TexVolume, s_tex_pos / VolumeGridSize).r;
+        // Check for overall intersection with volume, eliminating a lot of unnecessary calculations
+        Ray r; float tnear, tfar;
+        bool inbox = RayAABBIntersection(CameraEye, camera_dir, VolumeGridSize, r, tnear, tfar);
+        if (inbox) {
 
-        // First hit: isosurface
-        if ( (prevDensity <= Isovalue && Isovalue < density)
-          || (prevDensity >= Isovalue && Isovalue > density) )
-        {
-          //refine position
-          float t = (Isovalue - prevDensity) / (density - prevDensity);
-          s_tex_pos = tex_pos  + r.Dir * (s + t * h);
-          
-          // Get color
-          vec4 src = Color;
+            // Initialize Transparency and Radiance color
+            vec4 dst = vec4(0.0);
 
-          // Apply gradient, if enabled
-          if (ApplyGradientPhongShading == 1)
-          {
-            src.rgb = ShadeBlinnPhong(s_tex_pos, src.rgb);
-          }
+            // Traverse the octree and save relevant nodes
+            for (int nodeIndex = 0; nodeIndex < octreeNodes.length(); ++nodeIndex) {
 
-          // Front-to-back composition
-          src.rgb = src.rgb * src.a;
-          dst = dst + (1.0 - dst.a) * src;
-          
-          // Opacity threshold: 99%
-          if (dst.a > 0.99) break;
+                // Get the current node
+                GPUOctreeNode currentNode = octreeNodes[nodeIndex];
+
+                // Skip this node if the isovalue is not in range
+                if (!((currentNode.maxVal > Isovalue) && (currentNode.minVal < Isovalue))) continue;
+
+                // Save node data if ray intersects it
+                // TODO: we have to make sure we are in a leaf node before adding it!
+                bool intersects = RayAABBIntersection(CameraEye, camera_dir, currentNode.maxBounds - currentNode.minBounds, r, tnear, tfar);
+                if (intersects && numIntersectedNodes <= intersectedNodes.length()) {
+                    intersectedNodes[numIntersectedNodes] = vec3(tnear, tfar, nodeIndex);
+                    numIntersectedNodes++;
+                }
+            }
+
+            for (int i = 0; i < numIntersectedNodes; i++) {
+                vec3 intersectedNode = intersectedNodes[i];
+                tnear = intersectedNode[0];
+                tfar = intersectedNode[1];
+
+                // Distance to be evaluated
+                float D = abs(tfar - tnear);
+
+                // World position at tnear, translated to the volume [0, VolumeGridSize]
+                vec3 wld_pos = r.Origin + r.Dir * tnear;
+                // Texture position
+                vec3 tex_pos = wld_pos + (VolumeGridSize * 0.5);
+
+                // Evaluate from 0 to D...
+                float prevDensity = texture(TexVolume, tex_pos / VolumeGridSize).r;
+                for (float s = 0.0; s < D;) {
+                    float CurrentStepSize = (abs(prevDensity - Isovalue) < StepSizeRange) ? StepSizeSmall : StepSizeLarge;
+
+                    // Get the current step or the remaining interval
+                    float h = min(CurrentStepSize, D - s);
+                
+                    // Texture position at tnear + (s + h)
+                    vec3 s_tex_pos = tex_pos  + r.Dir * (s + h);
+                
+                    // Get normalized density from volume
+                    float density = texture(TexVolume, s_tex_pos / VolumeGridSize).r;
+
+                    // First hit: isosurface
+                    if ( (prevDensity <= Isovalue && Isovalue < density)
+                    || (prevDensity >= Isovalue && Isovalue > density) )
+                    {
+                    //refine position
+                    float t = (Isovalue - prevDensity) / (density - prevDensity);
+                    s_tex_pos = tex_pos  + r.Dir * (s + t * h);
+                    
+                    // Get color
+                    vec4 src = Color;
+
+                    // Apply gradient, if enabled
+                    if (ApplyGradientPhongShading == 1)
+                    {
+                        src.rgb = ShadeBlinnPhong(s_tex_pos, src.rgb);
+                    }
+
+                    // Front-to-back composition
+                    src.rgb = src.rgb * src.a;
+                    dst = dst + (1.0 - dst.a) * src;
+                    
+                    // Opacity threshold: 99%
+                    if (dst.a > 0.99) break;
+                    }
+
+                    // Go to the next interval
+                    prevDensity = density;
+                    s = s + h;
+                }
+            }
+            imageStore(OutputFrag, storePos, dst);
         }
-
-        // Go to the next interval
-        prevDensity = density;
-        s = s + h;
-      }
-
-      imageStore(OutputFrag, storePos, dst);
     }
-  }
 }

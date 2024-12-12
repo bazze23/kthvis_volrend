@@ -111,18 +111,6 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
   glBufferData(GL_SHADER_STORAGE_BUFFER, flatTree.size() * sizeof(GPUOctreeNode), flatTree.data(), GL_STATIC_DRAW);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 16, octreeSSBO);
 
-  // - prepare intersected nodes list buffer (for each pixel)
-  int screenWidth = m_ext_rendering_parameters->GetScreenWidth();
-  int screenHeight = m_ext_rendering_parameters->GetScreenHeight();
-  constexpr int MAX_NODES_PER_PIXEL = 32;
-  size_t bufferSize = screenWidth * screenHeight * MAX_NODES_PER_PIXEL * sizeof(IntersectedNode); // One list of intersected nodes per pixel
-  GLuint intersectedNodesSSBO;
-  glGenBuffers(1, &intersectedNodesSSBO);
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, intersectedNodesSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, nullptr, GL_DYNAMIC_DRAW);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 17, intersectedNodesSSBO);
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
   // - data sets to work on: scalar field and its gradient
   if (m_ext_data_manager->GetCurrentVolumeTexture())
     cp_shader_rendering->SetUniformTexture3D("TexVolume", m_ext_data_manager->GetCurrentVolumeTexture()->GetTextureID(), 1);

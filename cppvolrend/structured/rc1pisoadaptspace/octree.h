@@ -51,11 +51,4 @@ struct alignas(16) GPUOctreeNode {
 
 void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctreeNode>& flatTree);
 
-struct alignas(16) IntersectedNode {
-	float tnear;
-	float tfar;
-	int nodeIndex;
-	float padding1;
-};
-
 #endif // OCTREE_H
