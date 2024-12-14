@@ -35,6 +35,10 @@ uniform vec3 BlinnPhongIspecular;
 uniform vec3 WorldEyePos;
 uniform vec3 LightSourcePosition;
 
+int numIntersectedNodes = 0; // Counter for this pixel's intersected nodes
+vec3 intersectedNodes[32];  // Container for this pixel's intersected nodes
+
+// Define struct, same as in octree.h
 struct GPUOctreeNode {
     vec3 minBounds;        // 12 bytes
     float padding1;        // 4 bytes for alignment
@@ -47,6 +51,7 @@ struct GPUOctreeNode {
     float padding3;        // 4 bytes
 };
 
+// Read flattened octree into GPU memory
 layout(std430, binding = 16) buffer OctreeNodesBuffer {
     GPUOctreeNode octreeNodes[];
 };
@@ -61,6 +66,53 @@ bool RayAABBIntersection (vec3 vert_eye, vec3 vert_dir, vec3 vol_scaled_dim,
 bool RayAABBIntersection (vec3 vert_eye, vec3 vert_dir, vec3 gridmin, vec3 gridmax,
                           out Ray r, out float rtnear, out float rtfar);
 //////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Functions
+vec3 ShadeBlinnPhong (vec3 Tpos, vec3 clr);
+void traverseOctree(vec3 camera_dir, Ray r, float tnear, float tfar);
+void sortIntersectedNodes();
+vec4 rayMarch(Ray r, int debugFlag);
+
+
+void main() {
+
+    // set debug level
+    int debugFlag = 0;
+
+    // Get 2D pixel coordinates and image size
+    ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(OutputFrag); // Dimensions of the viewport
+
+    // Simple bounds check
+    if (storePos.x < size.x && storePos.y < size.y) {
+        // Get screen position [x, y] and consider centering the pixel by + 0.5
+        vec2 fpos = vec2(storePos) + 0.5;
+
+        // Transform fpos from [w, h] to [0, 1] to [-1, 1]
+        vec3 VerPos = (vec3(fpos.x / float(size.x), fpos.y / float(size.y), 0.0) * 2.0) - 1.0;
+
+        // Camera direction
+        vec3 camera_dir = normalize(vec3(VerPos.x * u_TanCameraFovY * u_CameraAspectRatio, VerPos.y * u_TanCameraFovY, -1.0) * mat3(u_CameraLookAt));
+
+        // Check for overall intersection with volume, eliminating a lot of unnecessary calculations
+        Ray r; float tnear, tfar;
+        bool inbox = RayAABBIntersection(CameraEye, camera_dir, VolumeGridSize, r, tnear, tfar);
+        if (inbox) {
+
+            // Traverse the octree and save relevant intersected nodes
+            traverseOctree(camera_dir, r, tnear, tfar);
+
+            // Sort intersected nodes, tnear from low to high
+            sortIntersectedNodes();
+            
+            // Perform ray marching for each intersected node
+            vec4 dst = rayMarch(r, debugFlag);
+
+            // Save accumulated color to output
+            imageStore(OutputFrag, storePos, dst);
+        }
+    }
+}
 
 vec3 ShadeBlinnPhong (vec3 Tpos, vec3 clr)
 {
@@ -104,182 +156,135 @@ vec3 ShadeBlinnPhong (vec3 Tpos, vec3 clr)
   return clr;
 }
 
-void main() {
+// Traverse the octree and save relevant nodes
+void traverseOctree(vec3 camera_dir, Ray r, float tnear, float tfar) {
+    // Initialize the traversal stack and node index
+    int stack[64];
+    int stackPtr = 0;
 
-    // set debug level
-    int debugFlag = 0;
+    // Start with the root node index (assumed to be 0 for the octree)
+    stack[stackPtr++] = 0;
+    // Perform the traversal using the stack
+    while (stackPtr > 0) {
+        // Pop a node index from the stack
+        int nodeIndex = stack[--stackPtr];
+        GPUOctreeNode currentNode = octreeNodes[nodeIndex];
 
-    // Get 2D pixel coordinates and image size
-    ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
-    ivec2 size = imageSize(OutputFrag); // Dimensions of the viewport
+        // Check the isovalue range to determine if this node is relevant
+        if (!((currentNode.maxVal > Isovalue) && (currentNode.minVal < Isovalue))) continue;
 
-    // Simple bounds check
-    if (storePos.x < size.x && storePos.y < size.y) {
-
-        // Process ray intersection with the octree
-        vec3 intersectedNodes[32];
-        int numIntersectedNodes = 0; // Counter for this pixel's intersected nodes
-
-        // Get screen position [x, y] and consider centering the pixel by + 0.5
-        vec2 fpos = vec2(storePos) + 0.5;
-
-        // Transform fpos from [w, h] to [0, 1] to [-1, 1]
-        vec3 VerPos = (vec3(fpos.x / float(size.x), fpos.y / float(size.y), 0.0) * 2.0) - 1.0;
-
-        // Camera direction
-        vec3 camera_dir = normalize(vec3(VerPos.x * u_TanCameraFovY * u_CameraAspectRatio, VerPos.y * u_TanCameraFovY, -1.0) * mat3(u_CameraLookAt));
-
-        // Check for overall intersection with volume, eliminating a lot of unnecessary calculations
-        Ray r; float tnear, tfar;
-        bool inbox = RayAABBIntersection(CameraEye, camera_dir, VolumeGridSize, r, tnear, tfar);
-        if (inbox) {
-
-            // Initialize Transparency and Radiance color
-            vec4 dst = vec4(0.0);
-
-            // Traverse the octree and save relevant nodes
-            // Initialize the traversal stack and node index
-            int stack[64];
-            int stackPtr = 0;
-
-            // Start with the root node index (assumed to be 0 for the octree)
-            stack[stackPtr++] = 0;
-            // Perform the traversal using the stack
-            while (stackPtr > 0) {
-                // Pop a node index from the stack
-                int nodeIndex = stack[--stackPtr];
-                GPUOctreeNode currentNode = octreeNodes[nodeIndex];
-
-                // Check the isovalue range to determine if this node is relevant
-                if (!((currentNode.maxVal > Isovalue) && (currentNode.minVal < Isovalue))) continue;
-
-                // Perform ray-AABB intersection for this node (translate with half volume size)
-                bool intersects = RayAABBIntersection(CameraEye, camera_dir, currentNode.minBounds-(0.5*VolumeGridSize), currentNode.maxBounds-(0.5*VolumeGridSize-vec3(1,1,1)), r, tnear, tfar);
-                if (!intersects) continue;  // skip this node if ray does not intersect with it
-                // Check if the current node is a leaf
-                if (currentNode.isLeaf == 1) {
-                    // Save the intersected node information
-                    if (numIntersectedNodes < intersectedNodes.length()) {
-                        intersectedNodes[numIntersectedNodes] = vec3(tnear, tfar, nodeIndex);
-                        numIntersectedNodes++;
-                    }
-                } else {
-                    // If it's not a leaf, push its children onto the stack
-                    for (int i = 0; i < 8; i++) { // Assuming octree has up to 8 children per node
-                        int childIndex = currentNode.childIndices[i];
-                        if (childIndex >= 0) { // Ensure child index is valid (-1 for invalid/leaf)
-                            stack[stackPtr++] = childIndex;
-
-                            // Ensure the stack does not overflow
-                            if (stackPtr >= stack.length()) {
-                                break;
-                            }
-                        }
-                    }
-                }
+        // Perform ray-AABB intersection for this node (translate with half volume size)
+        bool intersects = RayAABBIntersection(CameraEye, camera_dir,
+                                              currentNode.minBounds-(0.5*VolumeGridSize),
+                                              currentNode.maxBounds-(0.5*VolumeGridSize-vec3(1,1,1)), 
+                                              r, tnear, tfar);
+        if (!intersects) continue;  // skip this node if ray does not intersect with it
+        // Check if the current node is a leaf
+        if (currentNode.isLeaf == 1) {
+            // Save the intersected node information
+            if (numIntersectedNodes < intersectedNodes.length()) {
+                intersectedNodes[numIntersectedNodes] = vec3(tnear, tfar, nodeIndex);
+                numIntersectedNodes++;
             }
+            continue;
+        } 
 
-            // sort intersected nodes in order of increasing tnear (bubble sort)
-            for (int i = 0; i < numIntersectedNodes - 1; ++i) {
-                for (int j = 0; j < numIntersectedNodes - i - 1; ++j) {
-                    if (intersectedNodes[j][0] > intersectedNodes[j + 1][0]) { // Compare tnear values
-                        // Swap nodes[j] and nodes[j + 1]
-                        vec3 temp = intersectedNodes[j];
-                        intersectedNodes[j] = intersectedNodes[j + 1];
-                        intersectedNodes[j + 1] = temp;
-                    }
+        // If it's not a leaf, push its children onto the stack
+        for (int i = 0; i < 8; i++) { // Assuming octree has up to 8 children per node
+            int childIndex = currentNode.childIndices[i];
+            if (childIndex >= 0) { // Ensure child index is valid (-1 for invalid/leaf)
+                stack[stackPtr++] = childIndex;
+
+                // Ensure the stack does not overflow
+                if (stackPtr >= stack.length()) {
+                    break;
                 }
-            }
-            
-            // debug: visualize amount of nodes hit
-            if (debugFlag == 1) {
-                if (numIntersectedNodes > 0) {
-                    imageStore(OutputFrag, storePos, vec4(float(numIntersectedNodes)/10,0,0,1));
-                } else {
-                    imageStore(OutputFrag, storePos, vec4(0,1,0,1));
-                }
-            } else {
-                for (int i = 0; i < numIntersectedNodes; i++) {
-                    vec3 intersectedNode = intersectedNodes[i];
-                    tnear = intersectedNode[0];
-                    tfar = intersectedNode[1];
-                    GPUOctreeNode currentNode = octreeNodes[int(intersectedNode[2])];
-
-                    // Distance to be evaluated
-                    float D = abs(tfar - tnear);
-
-                    // World position at tnear, translated to the volume [0, VolumeGridSize]
-                    vec3 wld_pos = r.Origin + r.Dir * tnear;
-                    // Texture position
-                    vec3 tex_pos = wld_pos + (VolumeGridSize * 0.5);
-
-                    // Evaluate from 0 to D...
-                    float prevDensity = texture(TexVolume, tex_pos / VolumeGridSize).r;
-                    for (float s = 0.0; s < D;) {
-                        float CurrentStepSize = (abs(prevDensity - Isovalue) < StepSizeRange) ? StepSizeSmall : StepSizeLarge;
-
-                        // Get the current step or the remaining interval
-                        float h = min(CurrentStepSize, D - s);
-                    
-                        // Texture position at tnear + (s + h)
-                        vec3 s_tex_pos = tex_pos  + r.Dir * (s + h);
-                    
-                        // Get normalized density from volume
-                        float density = texture(TexVolume, s_tex_pos / VolumeGridSize).r;
-
-                        // First hit: isosurface
-                        if ( (prevDensity <= Isovalue && Isovalue < density)
-                        || (prevDensity >= Isovalue && Isovalue > density) )
-                        {
-                        //refine position
-                        float t = (Isovalue - prevDensity) / (density - prevDensity);
-                        s_tex_pos = tex_pos  + r.Dir * (s + t * h);
-                        
-                        // Get color
-                        vec4 src = Color;
-
-                        // Apply gradient, if enabled
-                        if (ApplyGradientPhongShading == 1)
-                        {
-                            src.rgb = ShadeBlinnPhong(s_tex_pos, src.rgb);
-                        }
-
-                        // Front-to-back composition
-                        src.rgb = src.rgb * src.a;
-                        dst = dst + (1.0 - dst.a) * src;
-                        
-                        // Opacity threshold: 99%
-                        if (dst.a > 0.99) break;
-                        }
-
-                        // Go to the next interval
-                        prevDensity = density;
-                        s = s + h;
-                    }
-                }
-                imageStore(OutputFrag, storePos, dst);
             }
         }
     }
 }
 
-// // Replace current main with this to debug length of the octreeNodes list
-// void main() {
-//     ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
-//     ivec2 imageSize = imageSize(OutputFrag);
+// Sort intersected nodes in order of increasing tnear (using bubble sort)
+void sortIntersectedNodes() {
+    for (int i = 0; i < numIntersectedNodes - 1; ++i) {
+        for (int j = 0; j < numIntersectedNodes - i - 1; ++j) {
+            if (intersectedNodes[j][0] > intersectedNodes[j + 1][0]) { // Compare tnear values
+                // Swap nodes[j] and nodes[j + 1]
+                vec3 temp = intersectedNodes[j];
+                intersectedNodes[j] = intersectedNodes[j + 1];
+                intersectedNodes[j + 1] = temp;
+            }
+        }
+    }
+}
 
-//     // Simple bounds check
-//     if (storePos.x < imageSize.x && storePos.y < imageSize.y) {
-//         // Get the node index (e.g., based on the pixel's x position)
-//         int nodeIndex = storePos.x; // Simple linear indexing for now
-//         if (nodeIndex < octreeNodes.length()) {
-//             GPUOctreeNode node = octreeNodes[nodeIndex];
+vec4 rayMarch(Ray r, int debugFlag) {
+    // debug: visualize amount of nodes hit
+    if (debugFlag == 1) {
+        if (numIntersectedNodes > 0) return vec4(float(numIntersectedNodes)/10,0,0,1);
+        return vec4(0,1,0,1);
+    }
 
-//             // Using minVal and maxVal to generate a color
-//             vec4 color = vec4(node.minVal, node.maxVal, 0.0, 1.0);
 
-//             // Output to the image
-//             imageStore(OutputFrag, storePos, color);
-//         }
-//     }
-// }
+    // Initialize Transparency and Radiance color
+    vec4 dst = vec4(0.0);
+    for (int i = 0; i < numIntersectedNodes; i++) {
+        vec3 intersectedNode = intersectedNodes[i];
+        float tnear = intersectedNode[0];
+        float tfar = intersectedNode[1];
+        GPUOctreeNode currentNode = octreeNodes[int(intersectedNode[2])];
+
+        // Distance to be evaluated
+        float D = abs(tfar - tnear);
+
+        // World position at tnear, translated to the volume [0, VolumeGridSize]
+        vec3 wld_pos = r.Origin + r.Dir * tnear;
+        // Texture position
+        vec3 tex_pos = wld_pos + (VolumeGridSize * 0.5);
+
+        // Evaluate from 0 to D...
+        float prevDensity = texture(TexVolume, tex_pos / VolumeGridSize).r;
+        for (float s = 0.0; s < D;) {
+            float CurrentStepSize = (abs(prevDensity - Isovalue) < StepSizeRange) ? StepSizeSmall : StepSizeLarge;
+
+            // Get the current step or the remaining interval
+            float h = min(CurrentStepSize, D - s);
+        
+            // Texture position at tnear + (s + h)
+            vec3 s_tex_pos = tex_pos  + r.Dir * (s + h);
+        
+            // Get normalized density from volume
+            float density = texture(TexVolume, s_tex_pos / VolumeGridSize).r;
+
+            // First hit: isosurface
+            if ( (prevDensity <= Isovalue && Isovalue < density)
+            || (prevDensity >= Isovalue && Isovalue > density) )
+            {
+            //refine position
+            float t = (Isovalue - prevDensity) / (density - prevDensity);
+            s_tex_pos = tex_pos  + r.Dir * (s + t * h);
+            
+            // Get color
+            vec4 src = Color;
+
+            // Apply gradient, if enabled
+            if (ApplyGradientPhongShading == 1)
+            {
+                src.rgb = ShadeBlinnPhong(s_tex_pos, src.rgb);
+            }
+
+            // Front-to-back composition
+            src.rgb = src.rgb * src.a;
+            dst = dst + (1.0 - dst.a) * src;
+            
+            // Opacity threshold: 99%
+            if (dst.a > 0.99) break;
+            }
+
+            // Go to the next interval
+            prevDensity = density;
+            s = s + h;
+        }
+    }
+    return dst;
+}

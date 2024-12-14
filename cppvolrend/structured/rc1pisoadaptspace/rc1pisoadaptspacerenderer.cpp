@@ -112,13 +112,13 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
 //   }
   
 
-//   - print child of root
-  std::cout << "Child indices of root: " << std::endl;
-  for (size_t i = 0; i < 8; i++)
-  {
-	/* code */
-  	std::cout << "Index in flat arr of child " << i << ":" << flatTree[0].childIndices[i] << std::endl;
-  }
+// //   - print child of root
+//   std::cout << "Child indices of root: " << std::endl;
+//   for (size_t i = 0; i < 8; i++)
+//   {
+// 	/* code */
+//   	std::cout << "Index in flat arr of child " << i << ":" << flatTree[0].childIndices[i] << std::endl;
+//   }
   
 
   // - load shaders
