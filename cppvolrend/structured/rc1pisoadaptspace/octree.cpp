@@ -69,8 +69,8 @@ AABB computeChildBounds(const AABB& parentBounds, int childIndex) {
 
 // Find and set min/max values for a node
 void setMinMaxVal(vis::StructuredGridVolume* volume, OctreeNode* node, const AABB& bounds) {
-	float min = 1;
-	float max = 0;
+	float min = 10;
+	float max = -10;
 	for (size_t x = 0; x < bounds.max.x; x++) {
 		for (size_t y = 0; y < bounds.max.y; y++) {
 			for (size_t z = 0; z < bounds.max.z; z++) {
@@ -107,22 +107,55 @@ glm::vec3 computeOffset(int childIndex, glm::vec3 size) {
 	return glm::vec3(xOffset, yOffset, zOffset);
 }
 
-void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctreeNode>& flatTree) {
-	gpuNode->minBounds = node->bounds.min;
-	gpuNode->maxBounds = node->bounds.max;
-	gpuNode->minVal = node->minVal;
-	gpuNode->maxVal = node->maxVal;
-	gpuNode->isLeaf = node->isLeaf ? 1 : 0;
+// void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctreeNode>& flatTree) {
+// 	gpuNode->minBounds = node->bounds.min;
+// 	gpuNode->maxBounds = node->bounds.max;
+// 	gpuNode->minVal = node->minVal;
+// 	gpuNode->maxVal = node->maxVal;
+// 	gpuNode->isLeaf = node->isLeaf ? 1 : 0;
+// 	flatTree.push_back(*gpuNode);
 
-	flatTree.push_back(*gpuNode);
+// 	if (!node->isLeaf) {
+// 		for (int i = 0; i < 8; i++) {
+// 			GPUOctreeNode tmp;
+// 			// gpuNode->childIndices[i] = flatTree.size();
+// 			flatTree[flatTree.size()-1].childIndices[i] = flatTree.size();
+// 			FlattenOctree(node->children[i], &tmp, flatTree); // DFS, left to right
+// 		}
+// 	} else {
+// 		std::fill(std::begin(gpuNode->childIndices), std::end(gpuNode->childIndices), -1);
+// 	}
+// }
 
-	if (!node->isLeaf) {
-		for (int i = 0; i < 8; i++) {
-			GPUOctreeNode tmp;
-			gpuNode->childIndices[i] = flatTree.size();
-			FlattenOctree(node->children[i], &tmp, flatTree); // DFS, left to right
-		}
-	} else {
-		std::fill(std::begin(gpuNode->childIndices), std::end(gpuNode->childIndices), -1);
-	}
+void FlattenOctree(OctreeNode* node, std::vector<GPUOctreeNode>& flatTree) {
+    // Create a GPUOctreeNode to store the current node's data
+    GPUOctreeNode gpuNode;
+    gpuNode.minBounds = node->bounds.min;
+    gpuNode.maxBounds = node->bounds.max;
+    gpuNode.minVal = node->minVal;
+    gpuNode.maxVal = node->maxVal;
+    gpuNode.isLeaf = node->isLeaf ? 1 : 0;
+
+    // Add the node to the flatTree
+    flatTree.push_back(gpuNode);
+    
+    // Get the index of the current node in flatTree (newest element)
+    int currentNodeIndex = flatTree.size() - 1;
+
+    if (!node->isLeaf) {
+        // For internal nodes, update the child indices first
+        // All 8 possible children of an internal node
+        for (int i = 0; i < 8; i++) {
+            // Set the index of this child
+            flatTree[currentNodeIndex].childIndices[i] = flatTree.size();
+
+            // Recurse into the child and flatten it
+            FlattenOctree(node->children[i], flatTree);  // Recursive call for the child node
+        }
+    } else {
+        // For leaf nodes, set all child indices to -1 (as they have no children)
+        std::fill(std::begin(flatTree[currentNodeIndex].childIndices), 
+                  std::end(flatTree[currentNodeIndex].childIndices), 
+                  -1);
+    }
 }
