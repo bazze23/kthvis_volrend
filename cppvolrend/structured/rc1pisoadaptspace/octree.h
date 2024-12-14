@@ -45,7 +45,7 @@ struct alignas(16) GPUOctreeNode {
     float maxVal;          // 4 bytes
     int childIndices[8];   // 32 bytes
     int isLeaf;            // 4 bytes
-    float padding3;        // 4 bytes
+    // not needed? float padding3;        // 4 bytes
 };
 
 void FlattenOctree(OctreeNode* node, std::vector<GPUOctreeNode>& flatTree);

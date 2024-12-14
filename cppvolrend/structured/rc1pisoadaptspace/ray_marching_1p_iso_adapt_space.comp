@@ -36,7 +36,7 @@ uniform vec3 WorldEyePos;
 uniform vec3 LightSourcePosition;
 
 int numIntersectedNodes = 0; // Counter for this pixel's intersected nodes
-vec3 intersectedNodes[32];  // Container for this pixel's intersected nodes
+vec2 intersectedNodes[16];  // Container for this pixel's intersected nodes
 
 // Define struct, same as in octree.h
 struct GPUOctreeNode {
@@ -48,7 +48,7 @@ struct GPUOctreeNode {
     float maxVal;          // 4 bytes
     int childIndices[8];   // 32 bytes
     int isLeaf;            // 4 bytes
-    float padding3;        // 4 bytes
+    // not needed? float padding3;        // 4 bytes
 };
 
 // Read flattened octree into GPU memory
@@ -183,7 +183,7 @@ void traverseOctree(vec3 camera_dir, Ray r, float tnear, float tfar) {
         if (currentNode.isLeaf == 1) {
             // Save the intersected node information
             if (numIntersectedNodes < intersectedNodes.length()) {
-                intersectedNodes[numIntersectedNodes] = vec3(tnear, tfar, nodeIndex);
+                intersectedNodes[numIntersectedNodes] = vec2(tnear, tfar);
                 numIntersectedNodes++;
             }
             continue;
@@ -210,7 +210,7 @@ void sortIntersectedNodes() {
         for (int j = 0; j < numIntersectedNodes - i - 1; ++j) {
             if (intersectedNodes[j][0] > intersectedNodes[j + 1][0]) { // Compare tnear values
                 // Swap nodes[j] and nodes[j + 1]
-                vec3 temp = intersectedNodes[j];
+                vec2 temp = intersectedNodes[j];
                 intersectedNodes[j] = intersectedNodes[j + 1];
                 intersectedNodes[j + 1] = temp;
             }
@@ -229,10 +229,9 @@ vec4 rayMarch(Ray r, int debugFlag) {
     // Initialize Transparency and Radiance color
     vec4 dst = vec4(0.0);
     for (int i = 0; i < numIntersectedNodes; i++) {
-        vec3 intersectedNode = intersectedNodes[i];
+        vec2 intersectedNode = intersectedNodes[i];
         float tnear = intersectedNode[0];
         float tfar = intersectedNode[1];
-        GPUOctreeNode currentNode = octreeNodes[int(intersectedNode[2])];
 
         // Distance to be evaluated
         float D = abs(tfar - tnear);
