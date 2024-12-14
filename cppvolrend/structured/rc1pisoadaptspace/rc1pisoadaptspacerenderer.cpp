@@ -91,10 +91,35 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
 
   // - flatten octree
   std::cout << "Flattening octree...";
-  GPUOctreeNode tmpNode;
   std::vector<GPUOctreeNode> flatTree;
-  FlattenOctree(&root, &tmpNode, flatTree);
+  FlattenOctree(&root, flatTree);
   std::cout << " done (size=" << flatTree.size() << ")" << std::endl;
+
+  // - print child bounds
+//   for (size_t i = 0; i < 8; i++)
+//   {
+// 	std::cout << "Bounds for child " << i << ":" << std::endl;
+// 	std::cout << "Min(x,y,z) = " << "(" << flatTree[flatTree[0].childIndices[i]].minBounds.x << "," << flatTree[flatTree[0].childIndices[i]].minBounds.y << "," << flatTree[flatTree[0].childIndices[i]].minBounds.z << ")" << std::endl;
+// 	std::cout << "Max(x,y,z) = " << "(" << flatTree[flatTree[0].childIndices[i]].maxBounds.x << "," << flatTree[flatTree[0].childIndices[i]].maxBounds.y << "," << flatTree[flatTree[0].childIndices[i]].maxBounds.z << ")" << std::endl;
+//   }
+
+  // - print min/max values
+//   for (size_t i = 0; i < flatTree.size(); i++)
+//   {
+// 	std::cout << "Min/max for node" << i << ":" << std::endl;
+// 	std::cout << "MinVal = " << "(" << flatTree[i].minVal << std::endl;
+// 	std::cout << "MaxVal = " << "(" << flatTree[i].maxVal << std::endl;
+//   }
+  
+
+//   - print child of root
+  std::cout << "Child indices of root: " << std::endl;
+  for (size_t i = 0; i < 8; i++)
+  {
+	/* code */
+  	std::cout << "Index in flat arr of child " << i << ":" << flatTree[0].childIndices[i] << std::endl;
+  }
+  
 
   // - load shaders
   cp_shader_rendering = new gl::ComputeShader();
