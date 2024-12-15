@@ -30,6 +30,8 @@ public:
 
 protected:
   float m_u_isovalue;
+  int m_u_octree_depth;
+  int m_u_octree_debug;
 
   /// Step size near the isovalue.
   float m_u_step_size_small;

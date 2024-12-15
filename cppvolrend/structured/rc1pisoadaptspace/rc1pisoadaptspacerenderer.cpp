@@ -14,6 +14,8 @@
 RayCasting1PassIsoAdaptSpace::RayCasting1PassIsoAdaptSpace()
   :cp_shader_rendering(nullptr)
   ,m_u_isovalue(0.5f)
+  ,m_u_octree_depth(3)
+  ,m_u_octree_debug(0)
   ,m_u_step_size_small(0.05f)
   ,m_u_step_size_large(1.0f)
   ,m_u_step_size_range(0.1f)
@@ -81,7 +83,7 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
   glm::vec3 vol_aabb = vol_resolution * vol_voxelsize;
 
   // - construct octree
-  int octreeDepth = 4;
+  int octreeDepth = m_u_octree_depth;
   glm::vec3 minCorner = {0,0,0};
   glm::vec3 maxCorner = vol_resolution-glm::vec3(1,1,1);
   AABB bounds(minCorner, maxCorner);
@@ -149,6 +151,8 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
   cp_shader_rendering->SetUniform("VolumeGridResolution", vol_resolution);
   cp_shader_rendering->SetUniform("VolumeVoxelSize", vol_voxelsize);
   cp_shader_rendering->SetUniform("VolumeGridSize", vol_aabb);
+
+  cp_shader_rendering->SetUniform("DEBUG_LEVEL", m_u_octree_debug);
 
   cp_shader_rendering->BindUniforms();
   cp_shader_rendering->Unbind();
@@ -254,6 +258,28 @@ void RayCasting1PassIsoAdaptSpace::SetImGuiComponents()
 {
   ImGui::Separator();
   
+  ImGui::Text("Octree Depth: ");
+  if(ImGui::DragInt("###RayCasting1PassIsoAdaptSpaceUIOctreeDepth", &m_u_octree_depth, 0.01f, 1, 5, "%d")) {
+	m_u_octree_depth = std::max(std::min(m_u_octree_depth, 100), 1);
+	SetOutdated();
+  }
+
+  if (ImGui::Button("Build Octree")) {
+	this->Init(m_ext_rendering_parameters->GetScreenWidth(),m_ext_rendering_parameters->GetScreenHeight());
+	SetOutdated();
+  }
+
+  ImGui::Text("Debug (0 or 1): ");
+  if(ImGui::DragInt("###RayCasting1PassIsoAdaptSpaceUIOctreeDebug", &m_u_octree_debug, 0.01f, 0, 1, "%d")) {
+	m_u_octree_debug = std::max(std::min(m_u_octree_debug, 100), 0);
+	SetOutdated();
+  }
+
+  if (ImGui::Button("Update")) {
+	this->Init(m_ext_rendering_parameters->GetScreenWidth(),m_ext_rendering_parameters->GetScreenHeight());
+	SetOutdated();
+  }
+
   ImGui::Text("Isovalue: ");
   if (ImGui::DragFloat("###RayCasting1PassIsoAdaptUIIsovalue", &m_u_isovalue, 0.01f, 0.01f, 100.0f, "%.2f"))
   {

@@ -35,6 +35,8 @@ uniform vec3 BlinnPhongIspecular;
 uniform vec3 WorldEyePos;
 uniform vec3 LightSourcePosition;
 
+uniform int DEBUG_LEVEL;
+
 // Define struct, same as in octree.h
 struct GPUOctreeNode {
     vec3 minBounds;        // 12 bytes
@@ -70,10 +72,10 @@ void sortIntersectedNodes();
 vec4 rayMarch(Ray r);
 
 // Constants/parameters
-const int OCTREE_DEPTH = 4; // ideal but unfortunately not compile-time constant: int(log(7*octreeNodes.length()+1)) / int(log(8));
+// This is the max depth of the octre, please see comment on next line
+const int OCTREE_DEPTH = 5; // ideal but unfortunately not compile-time constant: int(log(7*octreeNodes.length()+1)) / int(log(8));
 const int MAX_INTERSECTED_NODES = 3*int(pow(2, OCTREE_DEPTH))-2;
 const int MAX_STACK_SIZE = OCTREE_DEPTH * 8;
-const int DEBUG_LEVEL = 0;
 
 // Global Variables
 int numIntersectedNodes = 0; // Counter for this pixel's intersected nodes
@@ -182,10 +184,9 @@ void sortIntersectedNodes() {
 vec4 rayMarch(Ray r) {
     // debug: visualize nodes, brighter pixel color if more nodes are hit
     if (DEBUG_LEVEL == 1) {
-        if (numIntersectedNodes > 0) return vec4(float(numIntersectedNodes)/MAX_INTERSECTED_NODES,0,0,1);
+        if (numIntersectedNodes > 0) return vec4(float(numIntersectedNodes)/20,0,0,1);
         return vec4(0,0,0,0); // fully transparent
     }
-
 
     // Initialize Transparency and Radiance color
     vec4 dst = vec4(0.0);
