@@ -81,12 +81,12 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
   glm::vec3 vol_aabb = vol_resolution * vol_voxelsize;
 
   // - construct octree
+  int octreeDepth = 4;
   glm::vec3 minCorner = {0,0,0};
   glm::vec3 maxCorner = vol_resolution-glm::vec3(1,1,1);
   AABB bounds(minCorner, maxCorner);
   OctreeNode root(bounds);
   std::cout << "Constructing octree (root dim " << vol_resolution.x << "x" << vol_resolution.y << "x" << vol_resolution.z << ")...";
-  int octreeDepth = 5;
   BuildOctree(&root,m_ext_data_manager->GetCurrentStructuredVolume(),octreeDepth,0);
   std::cout << " done" << std::endl;
 
