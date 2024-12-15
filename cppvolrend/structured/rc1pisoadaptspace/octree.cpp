@@ -2,7 +2,6 @@
 
 AABB computeChildBounds(const AABB& parentBounds, int childIndex);
 void setMinMaxVal(vis::StructuredGridVolume* volume, OctreeNode* node, const AABB& bounds);
-bool checkIfEmpty(vis::StructuredGridVolume* volume, const AABB& bounds);
 glm::vec3 computeOffset(int childIndex, glm::vec3 size);
 
 AABB::AABB(const glm::vec3& minCorner, const glm::vec3& maxCorner) : min(minCorner), max(maxCorner) {}
@@ -44,11 +43,6 @@ void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDep
 		// Create child node
 		node->children[i] = new OctreeNode(childBounds);
 
-		// // Print child bounds
-		// std::cout << "Bounds for child " << i << ":" << std::endl;
-		// std::cout << "Min(x,y,z) = " << "(" << childBounds.min.x << "," << childBounds.min.y << "," << childBounds.min.z << ")" << std::endl;
-		// std::cout << "Max(x,y,z) = " << "(" << childBounds.max.x << "," << childBounds.max.y << "," << childBounds.max.z << ")" << std::endl;
-
 		// Set min and max values in node
 		setMinMaxVal(volume, node->children[i], childBounds);
 
@@ -56,7 +50,7 @@ void BuildOctree(OctreeNode* node, vis::StructuredGridVolume* volume, int maxDep
 		BuildOctree(node->children[i], volume, maxDepth, currentDepth);
 	}
 
-	// Set min/max values for root node (is this necessary?)
+	// Set min/max values for root node
 	setMinMaxVal(volume, node, node->bounds);
 }
 
@@ -65,37 +59,6 @@ AABB computeChildBounds(const AABB& parentBounds, int childIndex) {
 	glm::vec3 childSize = (parentBounds.max - parentBounds.min + glm::vec3(1, 1, 1)) * 0.5f;
 	glm::vec3 offset = computeOffset(childIndex, childSize);
 	return AABB(parentBounds.min + offset, parentBounds.min + offset + childSize - glm::vec3(1, 1, 1));
-}
-
-// Find and set min/max values for a node
-void setMinMaxVal(vis::StructuredGridVolume* volume, OctreeNode* node, const AABB& bounds) {
-	float min = 10;
-	float max = -10;
-	for (size_t x = 0; x < bounds.max.x; x++) {
-		for (size_t y = 0; y < bounds.max.y; y++) {
-			for (size_t z = 0; z < bounds.max.z; z++) {
-				float sample = volume->GetNormalizedSample(x, y, z);
-				if (sample < min) min = sample;
-				if (sample > max) max = sample;
-			}
-		}
-	}
-	node->minVal = min;
-	node->maxVal = max;
-}
-
-// Check if node is empty
-bool checkIfEmpty(vis::StructuredGridVolume* volume, const AABB& bounds) {
-	for (size_t x = 0; x < bounds.max.x; x++) {
-		for (size_t y = 0; y < bounds.max.y; y++) {
-			for (size_t z = 0; z < bounds.max.z; z++) {
-				// Non-empty if there exists at least one sample that exceeds threshold (arbitrary value)
-				if (volume->GetNormalizedSample(x, y, z) > 0.05) return false;
-				// if (volume->GetAbsoluteSample(x, y, z) != 0 && volume->GetAbsoluteSample(x, y, z) != 35) return false;
-			}
-		}
-	}
-	return true;
 }
 
 // Calculate child axis offsets based on child index, using bit shifting
@@ -107,25 +70,23 @@ glm::vec3 computeOffset(int childIndex, glm::vec3 size) {
 	return glm::vec3(xOffset, yOffset, zOffset);
 }
 
-// void FlattenOctree(OctreeNode* node, GPUOctreeNode* gpuNode, std::vector<GPUOctreeNode>& flatTree) {
-// 	gpuNode->minBounds = node->bounds.min;
-// 	gpuNode->maxBounds = node->bounds.max;
-// 	gpuNode->minVal = node->minVal;
-// 	gpuNode->maxVal = node->maxVal;
-// 	gpuNode->isLeaf = node->isLeaf ? 1 : 0;
-// 	flatTree.push_back(*gpuNode);
+// Find and set min/max values for a node
+void setMinMaxVal(vis::StructuredGridVolume* volume, OctreeNode* node, const AABB& bounds) {
+	float min = 10;
+	float max = -10;
+	for (size_t x = bounds.min.x; x < bounds.max.x; x++) {
+		for (size_t y = bounds.min.y; y < bounds.max.y; y++) {
+			for (size_t z = bounds.min.z; z < bounds.max.z; z++) {
+				float sample = volume->GetNormalizedSample(x, y, z);
+				if (sample < min) min = sample;
+				if (sample > max) max = sample;
+			}
+		}
+	}
+	node->minVal = min;
+	node->maxVal = max;
+}
 
-// 	if (!node->isLeaf) {
-// 		for (int i = 0; i < 8; i++) {
-// 			GPUOctreeNode tmp;
-// 			// gpuNode->childIndices[i] = flatTree.size();
-// 			flatTree[flatTree.size()-1].childIndices[i] = flatTree.size();
-// 			FlattenOctree(node->children[i], &tmp, flatTree); // DFS, left to right
-// 		}
-// 	} else {
-// 		std::fill(std::begin(gpuNode->childIndices), std::end(gpuNode->childIndices), -1);
-// 	}
-// }
 
 void FlattenOctree(OctreeNode* node, std::vector<GPUOctreeNode>& flatTree) {
     // Create a GPUOctreeNode to store the current node's data

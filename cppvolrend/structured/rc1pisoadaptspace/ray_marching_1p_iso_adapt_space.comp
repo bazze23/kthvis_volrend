@@ -35,9 +35,6 @@ uniform vec3 BlinnPhongIspecular;
 uniform vec3 WorldEyePos;
 uniform vec3 LightSourcePosition;
 
-int numIntersectedNodes = 0; // Counter for this pixel's intersected nodes
-vec2 intersectedNodes[16];  // Container for this pixel's intersected nodes
-
 // Define struct, same as in octree.h
 struct GPUOctreeNode {
     vec3 minBounds;        // 12 bytes
@@ -48,7 +45,6 @@ struct GPUOctreeNode {
     float maxVal;          // 4 bytes
     int childIndices[8];   // 32 bytes
     int isLeaf;            // 4 bytes
-    // not needed? float padding3;        // 4 bytes
 };
 
 // Read flattened octree into GPU memory
@@ -71,13 +67,19 @@ bool RayAABBIntersection (vec3 vert_eye, vec3 vert_dir, vec3 gridmin, vec3 gridm
 vec3 ShadeBlinnPhong (vec3 Tpos, vec3 clr);
 void traverseOctree(vec3 camera_dir, Ray r, float tnear, float tfar);
 void sortIntersectedNodes();
-vec4 rayMarch(Ray r, int debugFlag);
+vec4 rayMarch(Ray r);
 
+// Constants/parameters
+const int OCTREE_DEPTH = 5;
+const int MAX_INTERSECTED_NODES = 3*int(pow(2, OCTREE_DEPTH))-2;
+const int MAX_STACK_SIZE = OCTREE_DEPTH * 8;
+const int DEBUG_LEVEL = 0;
+
+// Global Variables
+int numIntersectedNodes = 0; // Counter for this pixel's intersected nodes
+vec2 intersectedNodes[MAX_INTERSECTED_NODES];  // Container for this pixel's intersected nodes
 
 void main() {
-
-    // set debug level
-    int debugFlag = 0;
 
     // Get 2D pixel coordinates and image size
     ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
@@ -106,7 +108,7 @@ void main() {
             sortIntersectedNodes();
             
             // Perform ray marching for each intersected node
-            vec4 dst = rayMarch(r, debugFlag);
+            vec4 dst = rayMarch(r);
 
             // Save accumulated color to output
             imageStore(OutputFrag, storePos, dst);
@@ -114,52 +116,10 @@ void main() {
     }
 }
 
-vec3 ShadeBlinnPhong (vec3 Tpos, vec3 clr)
-{
-  // Gradient normal
-  vec3 gradient_normal =  texture(TexVolumeGradient, Tpos / VolumeGridSize).xyz;
-  
-  // If is non-zero
-  if (gradient_normal != vec3(0, 0, 0))
-  {
-    vec3 Wpos = Tpos - (VolumeGridSize * 0.5);
-    
-    vec3 light_direction = normalize(LightSourcePosition - Wpos);
-    vec3 eye_direction   = normalize(CameraEye - Wpos);
-    vec3 halfway_vector  = normalize(eye_direction + light_direction);
-  
-    gradient_normal      = normalize(gradient_normal);
-    // We consider front and back faces as the same
-    // float FrontOrBack = dot(gradient_normal, eye_direction);
-    // float FrontOrBack = dot(gradient_normal, light_direction);
-    // if (FrontOrBack < 0)
-    // {
-    //   gradient_normal = -gradient_normal;
-    // }
-    
-    // float dot_diff = dot(gradient_normal, light_direction);
-    // if (dot_diff < 0) dot_diff = dot(-gradient_normal, light_direction);
-    float dot_diff = max(0, dot(gradient_normal, light_direction));
-
-    // float dot_spec = dot(halfway_vector, gradient_normal);
-    // if (dot_spec < 0) dot_spec = dot(halfway_vector, -gradient_normal);
-    float dot_spec = max(0, dot(halfway_vector, gradient_normal));
-   
-    clr = 
-      // rgb only affects ambient + diffuse
-      (clr * (BlinnPhongKa + BlinnPhongKd * dot_diff)) 
-      // specular contribution has it's own color
-      + BlinnPhongIspecular * BlinnPhongKs * pow(dot_spec, BlinnPhongShininess)
-    ;
-  }
-
-  return clr;
-}
-
 // Traverse the octree and save relevant nodes
 void traverseOctree(vec3 camera_dir, Ray r, float tnear, float tfar) {
     // Initialize the traversal stack and node index
-    int stack[64];
+    int stack[MAX_STACK_SIZE];
     int stackPtr = 0;
 
     // Start with the root node index (assumed to be 0 for the octree)
@@ -197,6 +157,7 @@ void traverseOctree(vec3 camera_dir, Ray r, float tnear, float tfar) {
 
                 // Ensure the stack does not overflow
                 if (stackPtr >= stack.length()) {
+                    stackPtr = -1;
                     break;
                 }
             }
@@ -218,9 +179,9 @@ void sortIntersectedNodes() {
     }
 }
 
-vec4 rayMarch(Ray r, int debugFlag) {
+vec4 rayMarch(Ray r) {
     // debug: visualize amount of nodes hit
-    if (debugFlag == 1) {
+    if (DEBUG_LEVEL == 1) {
         if (numIntersectedNodes > 0) return vec4(float(numIntersectedNodes)/10,0,0,1);
         return vec4(0,1,0,1);
     }
@@ -286,4 +247,46 @@ vec4 rayMarch(Ray r, int debugFlag) {
         }
     }
     return dst;
+}
+
+vec3 ShadeBlinnPhong (vec3 Tpos, vec3 clr)
+{
+  // Gradient normal
+  vec3 gradient_normal =  texture(TexVolumeGradient, Tpos / VolumeGridSize).xyz;
+  
+  // If is non-zero
+  if (gradient_normal != vec3(0, 0, 0))
+  {
+    vec3 Wpos = Tpos - (VolumeGridSize * 0.5);
+    
+    vec3 light_direction = normalize(LightSourcePosition - Wpos);
+    vec3 eye_direction   = normalize(CameraEye - Wpos);
+    vec3 halfway_vector  = normalize(eye_direction + light_direction);
+  
+    gradient_normal      = normalize(gradient_normal);
+    // We consider front and back faces as the same
+    // float FrontOrBack = dot(gradient_normal, eye_direction);
+    // float FrontOrBack = dot(gradient_normal, light_direction);
+    // if (FrontOrBack < 0)
+    // {
+    //   gradient_normal = -gradient_normal;
+    // }
+    
+    // float dot_diff = dot(gradient_normal, light_direction);
+    // if (dot_diff < 0) dot_diff = dot(-gradient_normal, light_direction);
+    float dot_diff = max(0, dot(gradient_normal, light_direction));
+
+    // float dot_spec = dot(halfway_vector, gradient_normal);
+    // if (dot_spec < 0) dot_spec = dot(halfway_vector, -gradient_normal);
+    float dot_spec = max(0, dot(halfway_vector, gradient_normal));
+   
+    clr = 
+      // rgb only affects ambient + diffuse
+      (clr * (BlinnPhongKa + BlinnPhongKd * dot_diff)) 
+      // specular contribution has it's own color
+      + BlinnPhongIspecular * BlinnPhongKs * pow(dot_spec, BlinnPhongShininess)
+    ;
+  }
+
+  return clr;
 }

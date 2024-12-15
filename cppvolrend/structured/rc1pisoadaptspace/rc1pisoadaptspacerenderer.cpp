@@ -86,7 +86,8 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
   AABB bounds(minCorner, maxCorner);
   OctreeNode root(bounds);
   std::cout << "Constructing octree (root dim " << vol_resolution.x << "x" << vol_resolution.y << "x" << vol_resolution.z << ")...";
-  BuildOctree(&root,m_ext_data_manager->GetCurrentStructuredVolume(),2,0);
+  int octreeDepth = 5;
+  BuildOctree(&root,m_ext_data_manager->GetCurrentStructuredVolume(),octreeDepth,0);
   std::cout << " done" << std::endl;
 
   // - flatten octree
@@ -106,9 +107,11 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
   // - print min/max values
 //   for (size_t i = 0; i < flatTree.size(); i++)
 //   {
-// 	std::cout << "Min/max for node" << i << ":" << std::endl;
-// 	std::cout << "MinVal = " << "(" << flatTree[i].minVal << std::endl;
-// 	std::cout << "MaxVal = " << "(" << flatTree[i].maxVal << std::endl;
+// 	if (flatTree[i].minVal > 0) {
+	// 	std::cout << "Min/max for node" << i << ":" << std::endl;
+	// 	std::cout << "MinVal = " << "(" << flatTree[i].minVal << ")" << std::endl;
+	// 	std::cout << "MaxVal = " << "(" << flatTree[i].maxVal << ")" << std::endl;
+// 	}
 //   }
   
 
