@@ -14,7 +14,7 @@
 RayCasting1PassIsoAdaptSpace::RayCasting1PassIsoAdaptSpace()
   :cp_shader_rendering(nullptr)
   ,m_u_isovalue(0.5f)
-  ,m_u_octree_depth(3)
+  ,m_u_octree_depth(1)
   ,m_u_octree_debug(0)
   ,m_u_step_size_small(0.05f)
   ,m_u_step_size_large(1.0f)
@@ -123,6 +123,14 @@ bool RayCasting1PassIsoAdaptSpace::Init(int swidth, int sheight)
 //   {
 // 	/* code */
 //   	std::cout << "Index in flat arr of child " << i << ":" << flatTree[0].childIndices[i] << std::endl;
+//   }
+
+//   std::cout << "Index testing:" << std::endl;
+//   int maxtest = 9;
+//   if (m_u_octree_depth == 2) maxtest = 73;
+//   for (size_t i = 0; i < maxtest; i++)
+//   {
+//   	std::cout << "index=" << i << ":" << flatTree[i].isLeaf << std::endl;
 //   }
   
 
@@ -259,7 +267,7 @@ void RayCasting1PassIsoAdaptSpace::SetImGuiComponents()
   ImGui::Separator();
   
   ImGui::Text("Octree Depth: ");
-  if(ImGui::DragInt("###RayCasting1PassIsoAdaptSpaceUIOctreeDepth", &m_u_octree_depth, 0.01f, 1, 5, "%d")) {
+  if(ImGui::DragInt("###RayCasting1PassIsoAdaptSpaceUIOctreeDepth", &m_u_octree_depth, 0.01f, 1, 2, "%d")) {
 	m_u_octree_depth = std::max(std::min(m_u_octree_depth, 100), 1);
 	SetOutdated();
   }

@@ -73,7 +73,7 @@ vec4 rayMarch(Ray r);
 
 // Constants/parameters
 // This is the max depth of the octre, please see comment on next line
-const int OCTREE_DEPTH = 5; // ideal but unfortunately not compile-time constant: int(log(7*octreeNodes.length()+1)) / int(log(8));
+const int OCTREE_DEPTH = 2; // ideal but unfortunately not compile-time constant: int(log(7*octreeNodes.length()+1)) / int(log(8));
 const int MAX_INTERSECTED_NODES = 3*int(pow(2, OCTREE_DEPTH))-2;
 const int MAX_STACK_SIZE = OCTREE_DEPTH * 8;
 
