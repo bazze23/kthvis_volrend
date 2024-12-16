@@ -54,7 +54,6 @@ namespace vis
     else if (extension.compare("dat") == 0) {
       ret = readdat(filepath);
     }
-    printf("DONE\n");
 
     return ret;
   }
@@ -213,6 +212,36 @@ namespace vis
       printf("  - Volume Name     : %s\n", filepath.c_str());
       printf("  - Volume Size     : [%d, %d, %d]\n", fw, fh, fd);
       printf("  - Volume Byte Size: %d\n", bytes_per_value);
+
+    //   AABB volumeBox = AABB(glm::vec3(0, 0, 0), glm::vec3(fw-1, fh-1, fd-1));
+    //   OctreeNode node = OctreeNode(volumeBox);
+    //   BuildOctree(&node, sg_ret, 2, 0);
+    //   std::cout << "Octree built!" << std::endl;
+	//   std::vector<GPUOctreeNode> flatTree;
+	//   GPUOctreeNode tmp;
+	//   FlattenOctree(&node, &tmp, flatTree);
+    //   std::cout << "Octree flattened!" << std::endl;
+	//   std::cout << "Flattened tree size: " << flatTree.size() << std::endl;
+	//   for (size_t i = 0; i < flatTree.size(); i++)
+	//   {
+	// 	std::cout << "minBounds at idx " << i << " (x,y,z):" << "("
+	// 	<< flatTree[i].minBounds.x << "," << flatTree[i].minBounds.y << "," << flatTree[i].minBounds.z << ")" << std::endl;
+	// 	std::cout << "maxBounds at idx " << i << " (x,y,z):" << "("
+	// 	<< flatTree[i].maxBounds.x << "," << flatTree[i].maxBounds.y << "," << flatTree[i].maxBounds.z << ")" << std::endl;
+	//   }
+	//   for (size_t i = 0; i < flatTree.size(); i++)
+	// 	{
+	// 		std::cout << "minVal at idx " << i << ": " << flatTree[i].minVal << std::endl;
+	// 		std::cout << "maxVal at idx " << i << ": " << flatTree[i].maxVal << std::endl;
+	// 	}
+
+
+	//   GLuint octreeSSBO;
+	//   glGenBuffers(1, &octreeSSBO);
+	//   glBindBuffer(GL_SHADER_STORAGE_BUFFER, octreeSSBO);
+	//   glBufferData(GL_SHADER_STORAGE_BUFFER, flatTree.size() * sizeof(GPUOctreeNode), flatTree.data(), GL_STATIC_DRAW); // flatTree.size() * sizeof(GPUOctreeNode)
+	//   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, octreeSSBO);
+	//   glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
       iffile.close();
       printf("Finished -> Read Volume From .raw File\n");

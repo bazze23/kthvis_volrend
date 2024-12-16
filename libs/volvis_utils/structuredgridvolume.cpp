@@ -150,6 +150,38 @@ namespace vis
     return 0.0;
   }
 
+  double StructuredGridVolume::GetAbsoluteSample(int x, int y, int z)
+  {
+    if (m_voxel_values == nullptr
+     || m_data_storage_size == DataStorageSize::UNKNOWN
+     || IsOutOfBoundary(x, y, z))
+    {
+        return 0.0;
+    }
+    
+    if(m_data_storage_size == DataStorageSize::_8_BITS)
+    {
+      unsigned char* array_vls = static_cast<unsigned char*>(m_voxel_values);
+      return (double)array_vls[x + (y * GetWidth()) + (z * GetWidth() * GetHeight())];
+    }
+    else if(m_data_storage_size == DataStorageSize::_16_BITS)
+    {
+      unsigned short* array_vls = static_cast<unsigned short*>(m_voxel_values);
+      return (double)array_vls[x + (y * GetWidth()) + (z * GetWidth() * GetHeight())];
+    }
+    else if (m_data_storage_size == DataStorageSize::_NORMALIZED_F)
+    {
+      float* array_vls = static_cast<float*>(m_voxel_values);
+      return (double)array_vls[x + (y * GetWidth()) + (z * GetWidth() * GetHeight())];
+    }
+    else if (m_data_storage_size == DataStorageSize::_NORMALIZED_D)
+    {
+      double* array_vls = static_cast<double*>(m_voxel_values);
+      return (double)array_vls[x + (y * GetWidth()) + (z * GetWidth() * GetHeight())];
+    }
+    return 0.0;
+  }
+
   double StructuredGridVolume::GetNormalizedInterpolatedSample (double i_x, double i_y, double i_z)
   {
     glm::dvec3 bbmin = GetGridBBoxMin();
