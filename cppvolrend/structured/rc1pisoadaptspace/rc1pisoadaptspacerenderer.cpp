@@ -259,6 +259,7 @@ void RayCasting1PassIsoAdaptSpace::FillParameterSpace(ParameterSpace & pspace)
   pspace.AddParameterDimension(new ParameterRangeFloat("StepSizeSmall", &m_u_step_size_small, 0.01f, 0.25f, 0.05f));
   pspace.AddParameterDimension(new ParameterRangeFloat("StepSizeLarge", &m_u_step_size_large, 0.25f, 2.0f, 0.25f));
   pspace.AddParameterDimension(new ParameterRangeFloat("StepSizeRange", &m_u_step_size_range, 0.05f, 0.26f, 0.05f));
+  pspace.AddParameterDimension(new ParameterRangeFloat("Isovalue", &m_u_isovalue, 0.01f, 0.99f, 0.05f));
 }
 
 
