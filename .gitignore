@@ -2,3 +2,4 @@
 bin/
 data/eval*
 .vscode/
+eval_scripts/.env/
