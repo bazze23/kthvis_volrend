@@ -25,7 +25,7 @@ def compare_std_plot_agg(
         grouped1[y_param],
         linestyle="-",
         marker="o",
-        color="blue",
+        color="dimgray",
         label=f"Mean {y_param}, {label1}",
     )
     plt.plot(
@@ -33,7 +33,7 @@ def compare_std_plot_agg(
         grouped2[y_param],
         linestyle="-",
         marker="o",
-        color="cyan",
+        color="royalblue",
         label=f"Mean {y_param}, {label2}",
     )
     plt.plot(
@@ -41,7 +41,7 @@ def compare_std_plot_agg(
         grouped3[y_param],
         linestyle="-",
         marker="o",
-        color="red",
+        color="deepskyblue",
         label=f"Mean {y_param}, {label3}",
     )
 
@@ -162,14 +162,20 @@ def cubic_plot(plot_title, x_param, y_param, z_param, color_param, eval_path, sa
 
 
 def main():
+    eval_path_baseline = "eval_data/gtx1070/bonsai_eval_full_iso/eval.csv"
+    eval_path_oct1 = "eval_data/gtx1070/bonsai_eval_full_ess_d1/eval.csv"
+    eval_path_oct2 = "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv"
+    filename_prefix = "gtx"
+    filename_dataset = "bonsai"
+
     cubic_plot(
         "Bonsai, baseline",
         "Isovalue",
         "StepSizeLarge",
         "FramesPerSecond",
         "StepSizeSmall",
-        "eval_data/gtx1070/bonsai_eval_full_iso/eval.csv",
-        "plots/gtx_bonsai_cubic_baseline.png",
+        eval_path_baseline,
+        "plots/" + filename_prefix + "_" + filename_dataset + "_cubic_baseline.png",
     )
     cubic_plot(
         "Bonsai, octree depth 1",
@@ -177,8 +183,8 @@ def main():
         "StepSizeLarge",
         "FramesPerSecond",
         "StepSizeSmall",
-        "eval_data/gtx1070/bonsai_eval_full_ess_d1/eval.csv",
-        "plots/gtx_bonsai_cubic_octree_d1.png",
+        eval_path_oct1,
+        "plots/" + filename_prefix + "_" + filename_dataset + "_cubic_octree_d1.png",
     )
     cubic_plot(
         "Bonsai, octree depth 2",
@@ -186,41 +192,41 @@ def main():
         "StepSizeLarge",
         "FramesPerSecond",
         "StepSizeSmall",
-        "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv",
-        "plots/gtx_bonsai_cubic_octree_d2.png",
+        eval_path_oct2,
+        "plots/" + filename_prefix + "_" + filename_dataset + "_cubic_octree_d2.png",
     )
     heatmap_plot(
         "Bonsai, baseline",
         "StepSizeLarge",
         "Isovalue",
-        "eval_data/gtx1070/bonsai_eval_full_iso/eval.csv",
-        "plots/gtx_bonsai_heatmap_baseline.png",
+        eval_path_baseline,
+        "plots/" + filename_prefix + "_" + filename_dataset + "_heatmap_baseline.png",
     )
     heatmap_plot(
         "Bonsai, octree depth 1",
         "StepSizeLarge",
         "Isovalue",
-        "eval_data/gtx1070/bonsai_eval_full_ess_d1/eval.csv",
-        "plots/gtx_bonsai_heatmap_octree_d1.png",
+        eval_path_oct1,
+        "plots/" + filename_prefix + "_" + filename_dataset + "_heatmap_octree_d1.png",
     )
     heatmap_plot(
         "Bonsai, octree depth 2",
         "StepSizeLarge",
         "Isovalue",
-        "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv",
-        "plots/gtx_bonsai_heatmap_octree_d2.png",
+        eval_path_oct2,
+        "plots/" + filename_prefix + "_" + filename_dataset + "_heatmap_octree_d2.png",
     )
     compare_std_plot_agg(
-        "Performance comparison",
+        "Frames per Second for Isovalues",
         "Isovalue",
         "FramesPerSecond",
-        "eval_data/gtx1070/bonsai_eval_full_iso/eval.csv",
-        "eval_data/gtx1070/bonsai_eval_full_ess_d1/eval.csv",
-        "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv",
+        eval_path_baseline,
+        eval_path_oct1,
+        eval_path_oct2,
         "baseline",
         "octree depth 1",
         "octree depth 2",
-        "plots/gtx_bonsai_compare.png",
+        "plots/" + filename_prefix + "_" + filename_dataset + "_compare.png",
     )
 
 
