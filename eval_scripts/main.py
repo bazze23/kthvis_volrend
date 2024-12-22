@@ -22,7 +22,7 @@ def compare_std_plot_light(
         linestyle="-",
         marker="o",
         color="dimgray",
-        label=f"Mean {y_param}, {label1}",
+        label=f"{y_param}, {label1}",
     )
     plt.plot(
         d2[x_param],
@@ -30,7 +30,7 @@ def compare_std_plot_light(
         linestyle="-",
         marker="o",
         color="royalblue",
-        label=f"Mean {y_param}, {label2}",
+        label=f"{y_param}, {label2}",
     )
     plt.plot(
         d3[x_param],
@@ -38,7 +38,7 @@ def compare_std_plot_light(
         linestyle="-",
         marker="o",
         color="deepskyblue",
-        label=f"Mean {y_param}, {label3}",
+        label=f"{y_param}, {label3}",
     )
 
     # Add labels and title
