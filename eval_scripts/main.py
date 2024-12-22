@@ -5,11 +5,58 @@ import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 
 
+# Compare three evaluations (light version, no aggregation)
+def compare_std_plot_light(
+    plot_title, x_param, y_param, eval_path1, eval_path2, eval_path3, label1, label2, label3, save_path
+):
+    plt.clf()
+    plt.figure(figsize=(16, 8))
+    d1 = pd.read_csv(eval_path1)
+    d2 = pd.read_csv(eval_path2)
+    d3 = pd.read_csv(eval_path3)
+
+    # Plot the values
+    plt.plot(
+        d1[x_param],
+        d1[y_param],
+        linestyle="-",
+        marker="o",
+        color="dimgray",
+        label=f"Mean {y_param}, {label1}",
+    )
+    plt.plot(
+        d2[x_param],
+        d2[y_param],
+        linestyle="-",
+        marker="o",
+        color="royalblue",
+        label=f"Mean {y_param}, {label2}",
+    )
+    plt.plot(
+        d3[x_param],
+        d3[y_param],
+        linestyle="-",
+        marker="o",
+        color="deepskyblue",
+        label=f"Mean {y_param}, {label3}",
+    )
+
+    # Add labels and title
+    plt.title(plot_title)
+    plt.xlabel(x_param)
+    plt.ylabel(y_param)
+    plt.legend()
+
+    # Save the plot
+    plt.savefig(save_path)
+
+
 # Compare three evaluations by aggregating by x_param using the mean value of y_param
 def compare_std_plot_agg(
     plot_title, x_param, y_param, eval_path1, eval_path2, eval_path3, label1, label2, label3, save_path
 ):
     plt.clf()
+    plt.figure(figsize=(16, 8))
     d1 = pd.read_csv(eval_path1)
     d2 = pd.read_csv(eval_path2)
     d3 = pd.read_csv(eval_path3)
@@ -58,6 +105,7 @@ def compare_std_plot_agg(
 # Aggregate the scatter plot of each x_param/y_param pair by x_param using the mean value of y_param
 def std_plot_agg(plot_title, x_param, y_param, eval_path, save_path):
     plt.clf()
+    plt.figure(figsize=(16, 8))
     d = pd.read_csv(eval_path)
 
     # Group by Isovalue and calculate the mean of all FramesPerSecond values
@@ -79,6 +127,7 @@ def std_plot_agg(plot_title, x_param, y_param, eval_path, save_path):
 # Scatter plot each x_param/y_param pair
 def std_plot(plot_title, x_param, y_param, eval_path, save_path):
     plt.clf()
+    plt.figure(figsize=(16, 8))
     d = pd.read_csv(eval_path)
 
     plt.plot(d[x_param], d[y_param], linestyle="none", marker="o")
@@ -92,13 +141,13 @@ def std_plot(plot_title, x_param, y_param, eval_path, save_path):
 # Heatmap visualizing FPS for combinations of two parameters
 def heatmap_plot(plot_title, row_param, col_param, eval_path, save_path):
     plt.clf()
+    plt.figure(figsize=(22, 8))
     d = pd.read_csv(eval_path)
 
     # Pivot table for Isovalue and StepSizeRange
     pivot = d.pivot_table(values="FramesPerSecond", index=row_param, columns=col_param, aggfunc="mean")
 
     # Plot the heatmap
-    plt.figure(figsize=(22, 8))
     sns.heatmap(pivot, annot=True, cmap="coolwarm", fmt=".2f", cbar_kws={"label": "Frames Per Second"})
     plt.title(plot_title)
     plt.savefig(save_path)
@@ -162,11 +211,18 @@ def cubic_plot(plot_title, x_param, y_param, z_param, color_param, eval_path, sa
 
 
 def main():
-    eval_path_baseline = "eval_data/gtx1070/bonsai_eval_full_iso/eval.csv"
-    eval_path_oct1 = "eval_data/gtx1070/bonsai_eval_full_ess_d1/eval.csv"
-    eval_path_oct2 = "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv"
-    filename_prefix = "gtx"
+    filename_prefix = "gtx1070"
     filename_dataset = "bonsai"
+    eval_grade = "full"
+    eval_path_baseline = (
+        "eval_data/" + filename_prefix + "/" + filename_dataset + "_eval_" + eval_grade + "_iso/eval.csv"
+    )
+    eval_path_oct1 = (
+        "eval_data/" + filename_prefix + "/" + filename_dataset + "_eval_" + eval_grade + "_ess_d1/eval.csv"
+    )
+    eval_path_oct2 = (
+        "eval_data/" + filename_prefix + "/" + filename_dataset + "_eval_" + eval_grade + "_ess_d2/eval.csv"
+    )
 
     cubic_plot(
         "Bonsai, baseline",
@@ -228,6 +284,19 @@ def main():
         "octree depth 2",
         "plots/" + filename_prefix + "_" + filename_dataset + "_compare.png",
     )
+
+    # compare_std_plot_light(
+    #     "Frames per Second for Isovalues",
+    #     "Isovalue",
+    #     "FramesPerSecond",
+    #     eval_path_baseline,
+    #     eval_path_oct1,
+    #     eval_path_oct2,
+    #     "baseline",
+    #     "octree depth 1",
+    #     "octree depth 2",
+    #     "plots/" + filename_prefix + "_" + filename_dataset + "_compare.png",
+    # )
 
 
 if __name__ == "__main__":
