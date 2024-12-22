@@ -162,12 +162,23 @@ def cubic_plot(plot_title, x_param, y_param, z_param, color_param, eval_path, sa
 
 
 def main():
-    fixed_param_plot(
-        "Bonsai, octree depth 2",
+    cubic_plot(
+        "Bonsai, baseline",
+        "Isovalue",
         "StepSizeLarge",
+        "FramesPerSecond",
         "StepSizeSmall",
-        "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv",
-        "plots/jahatest.png",
+        "eval_data/gtx1070/bonsai_eval_full_iso/eval.csv",
+        "plots/gtx_bonsai_cubic_baseline.png",
+    )
+    cubic_plot(
+        "Bonsai, octree depth 1",
+        "Isovalue",
+        "StepSizeLarge",
+        "FramesPerSecond",
+        "StepSizeSmall",
+        "eval_data/gtx1070/bonsai_eval_full_ess_d1/eval.csv",
+        "plots/gtx_bonsai_cubic_octree_d1.png",
     )
     cubic_plot(
         "Bonsai, octree depth 2",
@@ -176,28 +187,28 @@ def main():
         "FramesPerSecond",
         "StepSizeSmall",
         "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv",
-        "plots/testbokna.png",
+        "plots/gtx_bonsai_cubic_octree_d2.png",
+    )
+    heatmap_plot(
+        "Bonsai, baseline",
+        "StepSizeLarge",
+        "Isovalue",
+        "eval_data/gtx1070/bonsai_eval_full_iso/eval.csv",
+        "plots/gtx_bonsai_heatmap_baseline.png",
+    )
+    heatmap_plot(
+        "Bonsai, octree depth 1",
+        "StepSizeLarge",
+        "Isovalue",
+        "eval_data/gtx1070/bonsai_eval_full_ess_d1/eval.csv",
+        "plots/gtx_bonsai_heatmap_octree_d1.png",
     )
     heatmap_plot(
         "Bonsai, octree depth 2",
         "StepSizeLarge",
         "Isovalue",
         "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv",
-        "plots/bonkfire.png",
-    )
-    std_plot(
-        "Bonsai, octree depth 2",
-        "Isovalue",
-        "FramesPerSecond",
-        "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv",
-        "plots/stdlol.png",
-    )
-    std_plot_agg(
-        "Bonsai, octree depth 2",
-        "Isovalue",
-        "FramesPerSecond",
-        "eval_data/gtx1070/bonsai_eval_full_ess_d2/eval.csv",
-        "plots/stdlolagg.png",
+        "plots/gtx_bonsai_heatmap_octree_d2.png",
     )
     compare_std_plot_agg(
         "Performance comparison",
@@ -209,7 +220,7 @@ def main():
         "baseline",
         "octree depth 1",
         "octree depth 2",
-        "plots/comparebanga.png",
+        "plots/gtx_bonsai_compare.png",
     )
 
 
