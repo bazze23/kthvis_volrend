@@ -10,7 +10,7 @@ def compare_std_plot_light(
     plot_title, x_param, y_param, eval_path1, eval_path2, eval_path3, label1, label2, label3, save_path
 ):
     plt.clf()
-    plt.figure(figsize=(16, 8))
+    plt.figure(figsize=(16, 9))
     d1 = pd.read_csv(eval_path1)
     d2 = pd.read_csv(eval_path2)
     d3 = pd.read_csv(eval_path3)
@@ -48,7 +48,8 @@ def compare_std_plot_light(
     plt.legend()
 
     # Save the plot
-    plt.savefig(save_path)
+    plt.tight_layout()
+    plt.savefig(save_path, bbox_inches="tight")
 
 
 # Compare three evaluations by aggregating by x_param using the mean value of y_param
@@ -56,7 +57,7 @@ def compare_std_plot_agg(
     plot_title, x_param, y_param, eval_path1, eval_path2, eval_path3, label1, label2, label3, save_path
 ):
     plt.clf()
-    plt.figure(figsize=(16, 8))
+    plt.figure(figsize=(16, 9))
     d1 = pd.read_csv(eval_path1)
     d2 = pd.read_csv(eval_path2)
     d3 = pd.read_csv(eval_path3)
@@ -99,13 +100,14 @@ def compare_std_plot_agg(
     plt.legend()
 
     # Save the plot
-    plt.savefig(save_path)
+    plt.tight_layout()
+    plt.savefig(save_path, bbox_inches="tight")
 
 
 # Aggregate the scatter plot of each x_param/y_param pair by x_param using the mean value of y_param
 def std_plot_agg(plot_title, x_param, y_param, eval_path, save_path):
     plt.clf()
-    plt.figure(figsize=(16, 8))
+    plt.figure(figsize=(16, 9))
     d = pd.read_csv(eval_path)
 
     # Group by Isovalue and calculate the mean of all FramesPerSecond values
@@ -121,13 +123,14 @@ def std_plot_agg(plot_title, x_param, y_param, eval_path, save_path):
     plt.legend()
 
     # Save the plot
-    plt.savefig(save_path)
+    plt.tight_layout()
+    plt.savefig(save_path, bbox_inches="tight")
 
 
 # Scatter plot each x_param/y_param pair
 def std_plot(plot_title, x_param, y_param, eval_path, save_path):
     plt.clf()
-    plt.figure(figsize=(16, 8))
+    plt.figure(figsize=(16, 9))
     d = pd.read_csv(eval_path)
 
     plt.plot(d[x_param], d[y_param], linestyle="none", marker="o")
@@ -135,13 +138,14 @@ def std_plot(plot_title, x_param, y_param, eval_path, save_path):
     plt.xlabel(x_param)
     plt.ylabel(y_param)
 
-    plt.savefig(save_path)
+    plt.tight_layout()
+    plt.savefig(save_path, bbox_inches="tight")
 
 
 # Heatmap visualizing FPS for combinations of two parameters
 def heatmap_plot(plot_title, row_param, col_param, eval_path, save_path):
     plt.clf()
-    plt.figure(figsize=(22, 8))
+    plt.figure(figsize=(16, 9))
     d = pd.read_csv(eval_path)
 
     # Pivot table for Isovalue and StepSizeRange
@@ -150,7 +154,8 @@ def heatmap_plot(plot_title, row_param, col_param, eval_path, save_path):
     # Plot the heatmap
     sns.heatmap(pivot, annot=True, cmap="coolwarm", fmt=".2f", cbar_kws={"label": "Frames Per Second"})
     plt.title(plot_title)
-    plt.savefig(save_path)
+    plt.tight_layout()
+    plt.savefig(save_path, bbox_inches="tight")
 
 
 # Fix one parameter and plot for another varying parameter
@@ -181,7 +186,8 @@ def fixed_param_plot(plot_title, locked_param, plot_param, eval_path, save_path)
         ax.set_ylabel("Frames Per Second")
 
     plt.xlabel("Isovalue")
-    plt.savefig(save_path)
+    plt.tight_layout()
+    plt.savefig(save_path, bbox_inches="tight")
 
 
 # Plot a 3D graph with an additional color component
@@ -189,8 +195,8 @@ def cubic_plot(plot_title, x_param, y_param, z_param, color_param, eval_path, sa
     plt.clf()
     d = pd.read_csv(eval_path)
 
-    fig = plt.figure(figsize=(10, 7))
-    ax = fig.add_subplot(111, projection="3d")
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.add_subplot(projection="3d")
 
     # Subset data
     x = d[x_param]
@@ -200,14 +206,16 @@ def cubic_plot(plot_title, x_param, y_param, z_param, color_param, eval_path, sa
 
     # 3D scatter plot
     sc = ax.scatter(x, y, z, c=c, cmap="viridis", s=50)
-    plt.colorbar(sc, label=color_param)
+    cbar = plt.colorbar(sc, label=color_param)
+    cbar.set_ticks(y.unique())
 
     # Set axis labels
     ax.set_xlabel(x_param)
     ax.set_ylabel(y_param)
     ax.set_zlabel(z_param)
     plt.title(plot_title)
-    plt.savefig(save_path)
+    plt.tight_layout()
+    plt.savefig(save_path, bbox_inches="tight")
 
 
 def main():
@@ -229,7 +237,7 @@ def main():
         "Isovalue",
         "StepSizeLarge",
         "FramesPerSecond",
-        "StepSizeSmall",
+        "StepSizeLarge",
         eval_path_baseline,
         "plots/" + filename_prefix + "_" + filename_dataset + "_cubic_baseline.png",
     )
@@ -238,7 +246,7 @@ def main():
         "Isovalue",
         "StepSizeLarge",
         "FramesPerSecond",
-        "StepSizeSmall",
+        "StepSizeLarge",
         eval_path_oct1,
         "plots/" + filename_prefix + "_" + filename_dataset + "_cubic_octree_d1.png",
     )
@@ -247,7 +255,7 @@ def main():
         "Isovalue",
         "StepSizeLarge",
         "FramesPerSecond",
-        "StepSizeSmall",
+        "StepSizeLarge",
         eval_path_oct2,
         "plots/" + filename_prefix + "_" + filename_dataset + "_cubic_octree_d2.png",
     )
@@ -273,7 +281,7 @@ def main():
         "plots/" + filename_prefix + "_" + filename_dataset + "_heatmap_octree_d2.png",
     )
     compare_std_plot_agg(
-        "Frames per Second for Isovalues",
+        "Bonsai - Frames per Second across Isovalues",
         "Isovalue",
         "FramesPerSecond",
         eval_path_baseline,
@@ -286,7 +294,7 @@ def main():
     )
 
     # compare_std_plot_light(
-    #     "Frames per Second for Isovalues",
+    #     filename_dataset.capitalize() + " - Frames per Second across Isovalues",
     #     "Isovalue",
     #     "FramesPerSecond",
     #     eval_path_baseline,
