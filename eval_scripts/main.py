@@ -219,8 +219,8 @@ def cubic_plot(plot_title, x_param, y_param, z_param, color_param, eval_path, sa
 
 
 def main():
-    filename_prefix = "gtx1070"
-    filename_dataset = "bonsai"
+    filename_prefix = "vega8"
+    filename_dataset = "brain"
     eval_grade = "full"
     eval_path_baseline = (
         "eval_data/" + filename_prefix + "/" + filename_dataset + "_eval_" + eval_grade + "_iso/eval.csv"
@@ -233,7 +233,7 @@ def main():
     )
 
     cubic_plot(
-        "Bonsai, baseline",
+        filename_dataset.capitalize() + ", baseline",
         "Isovalue",
         "StepSizeLarge",
         "FramesPerSecond",
@@ -242,7 +242,7 @@ def main():
         "plots/" + filename_prefix + "_" + filename_dataset + "_cubic_baseline.png",
     )
     cubic_plot(
-        "Bonsai, octree depth 1",
+        filename_dataset.capitalize() + ", octree depth 1",
         "Isovalue",
         "StepSizeLarge",
         "FramesPerSecond",
@@ -251,7 +251,7 @@ def main():
         "plots/" + filename_prefix + "_" + filename_dataset + "_cubic_octree_d1.png",
     )
     cubic_plot(
-        "Bonsai, octree depth 2",
+        filename_dataset.capitalize() + ", octree depth 2",
         "Isovalue",
         "StepSizeLarge",
         "FramesPerSecond",
@@ -260,28 +260,28 @@ def main():
         "plots/" + filename_prefix + "_" + filename_dataset + "_cubic_octree_d2.png",
     )
     heatmap_plot(
-        "Bonsai, baseline",
+        filename_dataset.capitalize() + ", baseline",
         "StepSizeLarge",
         "Isovalue",
         eval_path_baseline,
         "plots/" + filename_prefix + "_" + filename_dataset + "_heatmap_baseline.png",
     )
     heatmap_plot(
-        "Bonsai, octree depth 1",
+        filename_dataset.capitalize() + ", octree depth 1",
         "StepSizeLarge",
         "Isovalue",
         eval_path_oct1,
         "plots/" + filename_prefix + "_" + filename_dataset + "_heatmap_octree_d1.png",
     )
     heatmap_plot(
-        "Bonsai, octree depth 2",
+        filename_dataset.capitalize() + ", octree depth 2",
         "StepSizeLarge",
         "Isovalue",
         eval_path_oct2,
         "plots/" + filename_prefix + "_" + filename_dataset + "_heatmap_octree_d2.png",
     )
     compare_std_plot_agg(
-        "Bonsai - Frames per Second across Isovalues",
+        filename_dataset.capitalize() + " - Frames per Second across Isovalues",
         "Isovalue",
         "FramesPerSecond",
         eval_path_baseline,
