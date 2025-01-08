@@ -2,3 +2,5 @@
 bin/
 data/eval*
 .vscode/
+eval_scripts/.env/
+eval_scripts/plots/*.png
